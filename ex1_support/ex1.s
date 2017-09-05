@@ -139,13 +139,21 @@ _reset:
 	ldr r3, =0x802
 	str r3, [r2, #0]
 
+	//
+	// setup for energy mode
+	//
+	ldr r1, =SCR
+	mov r2, #0
+	mov r3, #0x6
+	str r3, [r1, r2]
+
 loop:
 	// a way set all leds directly from buttons, perhaps useful later
 	// lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
 	// ldr r3, =0xFFFF00FF			// set all bits outside 8-15 to high
 	// orr r2, r2, r3			//
 
-	mov r1, r1
+	wfi
 	b loop
 
 // INFO:
