@@ -29,7 +29,7 @@
 
 	/* External Interrupts */
 	.long   dummy_handler
-	.long   gpio_handler            /* GPIO even handler */
+	.long   read_buttons            /* GPIO even handler */
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
@@ -39,7 +39,7 @@
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
-	.long   gpio_handler            /* GPIO odd handler */
+	.long   read_buttons            /* GPIO odd handler */
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
@@ -77,68 +77,145 @@
 
 .section .text
 
-cmu_base_addr:
-	.long CMU_BASE
-
-gpio_pa_base_addr:
-	.long GPIO_PA_BASE
-
-gpio_pc_base_addr:
-	.long GPIO_PC_BASE
-
 .globl  _reset
 .type   _reset, %function
 .thumb_func
 _reset:
-	// enable clock for GPIO controller
-	ldr r1, cmu_base_addr			// get base of CMU
-	ldr r2, [r1, #CMU_HFPERCLKEN0]		// current value of clock enabling register
-						// as we don't want to unset enabled clocks
-	mov r3, #1
+	// GPIO_PA_BASE = r5
+	// GPIO_PC_BASE = r6
+	// r11 is used to ignore first interrupt, as it fires every startup
+	ldr r5, =GPIO_PA_BASE			// base for GPIO
+	ldr r6, =GPIO_PC_BASE
+	mov r11, #1
+
+	//
+	// setup for GPIO
+	//
+	ldr r1, =CMU_BASE			// enable GPIO clock here
+	mov r3, #CMU_HFPERCLKEN0
+	ldr r2, [r1, r3]			// current value of clock enabling register
+	mov r3, #1				// as we don't want to unset enabled clocks
 	lsl r3, r3, #CMU_HFPERCLKEN0_GPIO	// left-shift to GPIO-bit
 	orr r2, r2, r3				// store new value of HFPERCLKEN0
 	str r2, [r1, #CMU_HFPERCLKEN0]		// store the new value with GPIO enabled
 
-	// set high drive strength
-	ldr r1, gpio_pa_base_addr		// base for GPIO
+	// set high drive strength for LEDs
 	mov r2, #0x2
-	str r2, [r1, #GPIO_CTRL]		// store 0x2 in GPIO_PA_CTRL
+	str r2, [r5, #GPIO_CTRL]		// store 0x2 in GPIO_PA_CTRL
 
 	// set pins 8-15 to output
 	ldr r2, =0x55555555
-	str r2, [r1, #GPIO_MODEH]		// store 0x55555555 in GPIO_PA_MODEH
+	str r2, [r5, #GPIO_MODEH]		// store 0x55555555 in GPIO_PA_MODEH
 
-	// turn on LEDS
-	ldr r2, =0xFFFF8EFF
-	str r2, [r1, #GPIO_DOUT]		// store 0xFFFE0000 in GPIO_PA_DOUT
-
-	// use GPIO_PC as base instead of PA
-	ldr r1, gpio_pc_base_addr
+	// turn on LEDS (use for initial LED values)
+	ldr r2, =0xFFFFF7FF
+	str r2, [r5, #GPIO_DOUT]
 
 	// set pins 0-7 to input
 	ldr r2, =0x33333333
-	str r2, [r1, #GPIO_MODEL] 		// store 0x33333333 in GPIO_PC_MODEL
+	str r2, [r6, #GPIO_MODEL] 		// store 0x33333333 in GPIO_PC_MODEL
 
 	// enable internal pull-up
 	mov r2, #0xFF
-	str r2, [r1, #GPIO_DOUT]		// store 0xFF to GPIO_PC_DOUT
+	str r2, [r6, #GPIO_DOUT]		// store 0xFF to GPIO_PC_DOUT
 
-	// get current value of GPIO_PC_DIN
-	ldr r2, [r1, #GPIO_DIN]			// load r2 with GPIO_PC_DIN offset from PC_BASE
+	//
+	// setup for interrupts
+	//
+	ldr r1, =GPIO_BASE			// write 0x22222222 to GPIO_EXTIPSELL
+	mov r2, #GPIO_EXTIPSELL
+	ldr r3, =0x22222222
+	str r3, [r1, r2]
 
-	b .  // do nothing
+	mov r2, #GPIO_EXTIFALL			// enable 1->0 transition interrupt
+	mov r3, #0xFF
+	str r3, [r1, r2]
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// GPIO handler
-// The CPU will jump here when there is a GPIO interrupt
-//
-/////////////////////////////////////////////////////////////////////////////
+	mov r2, #GPIO_IEN			// enable interrupt generation in IEN
+	mov r3, #0xFF
+	str r3, [r1, r2]
 
+	ldr r2, =ISER0				// enable interrupt handling
+	ldr r3, =0x802
+	str r3, [r2, #0]
+
+loop:
+	// a way set all leds directly from buttons, perhaps useful later
+	// lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
+	// ldr r3, =0xFFFF00FF			// set all bits outside 8-15 to high
+	// orr r2, r2, r3			//
+
+	mov r1, r1
+	b loop
+
+// INFO:
+// it seems the buttons are originally initialized as 0xF7,
+// having bit 4 unset - keep this in mind as it is probably
+// what is firing the first interrupt
 .thumb_func
-gpio_handler:
-	b .  // do nothing
+read_buttons:
+	// if r11 is set to 1, this means this is the initial
+	// interrupt that we want to ignore
+	cmp r11, #1
+	itt eq
+	moveq r11, #0
+	bxeq lr					// jump back to main loop
+
+	// first read current active LED to r1 and OR with 0xFFFF in
+	// higher order bits, as the microcontroller seemingly refuses
+	// to set it
+	mov r3, #GPIO_DOUT
+	ldr r1, [r5, r3]
+	ldr r3, =0xFFFF00FF
+	orr r1, r1, r3
+
+	mov r3, #GPIO_DIN			// get current values of buttons
+	ldr r2, [r6, r3]
+
+	ldr r3, =0x000000FE			// if only button 1 is pressed
+	ldr r4, =0x000000FB			// if only button 3 is pressed
+
+	// check if left button is pushed
+	cmp r2, r3
+	it ne
+	bne left_not_pushed			// skip code for pushing left button
+
+	// left was pushed
+	lsr r1, r1, #1				// right shift LED light
+	ldr r3, =0x0000FF00			// handle overflow
+	and r3, r3, r1
+	ldr r7, =0xFF00				// if all LED unset, then we have 0xFF00 here
+	cmp r3, r7
+	it eq
+	ldreq r1, =0xFFFF7FFF
+
+left_not_pushed:
+	// check if right button is pushed
+	cmp r2, r4
+	it ne
+	bne right_not_pushed			// skip code for pushing right button
+	lsl r1, r1, #1
+	ldr r3, =0x0000FF00			// handle overflow
+	and r3, r3, r1
+	ldr r7, =0xFF00				// if all LED unset, then we have 0xFF00 here
+	cmp r3, r7
+	it eq
+	ldreq r1, =0xFFFFFEFF
+
+right_not_pushed:
+	// store r1 back to GPIO_DOUT for LEDs
+	mov r2, #GPIO_DOUT
+	str r1, [r5, r2]
+
+	// clear interrupt flag
+	ldr r1, =GPIO_BASE
+	mov r2, #GPIO_IF
+	mov r3, #GPIO_IFC
+	ldr r4, [r1, r2]
+	str r4, [r1, r3]
+
+	bx lr
 
 .thumb_func
 dummy_handler:
-	b .  // do nothing
+	b .
