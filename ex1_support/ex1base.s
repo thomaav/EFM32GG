@@ -121,7 +121,7 @@ loop:
 	mov r3, #GPIO_DIN			// get current values of buttons
 	ldr r2, [r6, r3]
 
-	ldr r3, =0xFF 				// check if _any_ button pressed
+	ldr r3, =0xFF 				// skip if no buttons are pushed
 	cmp r2, r3
 	it eq
 	beq button_not_pushed
