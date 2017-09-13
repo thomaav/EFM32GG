@@ -40,7 +40,7 @@
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   read_buttons            /* GPIO odd handler */
-	.long   dummy_handler
+	.long   timer_interrupt		/* timer handler */
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
@@ -147,14 +147,70 @@ _reset:
 	mov r3, #0x6
 	str r3, [r1, r2]
 
+	//
+	// setup for systick
+	//
+	ldr r1, =CMU_BASE			// enable clock timer by setting bit 6 in HFPERCLKEN0
+	mov r3, #CMU_HFPERCLKEN0
+	ldr r2, [r1, r3]
+	mov r3, #1				// as we don't want to unset enabled clocks
+	lsl r3, r3, #6
+	orr r2, r2, r3
+	mov r3, #CMU_HFPERCLKEN0
+	str r2, [r1, r3]
+
+	ldr r1, =TIMER1_BASE			// store 14MHz in timer1_top for length
+	mov r2, #TIMER1_TOP			// between interrupts
+	ldr r3, =50
+	str r3, [r1, r2]
+
+	mov r2, #TIMER1_IEN			// store 1 in timer1_ien to enable timer interrupt
+	mov r3, #1
+	str r3, [r1, r2]
+
+	ldr r2, =ISER0				// enable interrupt handling of timer by also setting
+	ldr r3, =0x1802				// bit 12
+	str r3, [r2, #0]
+
+	ldr r1, =TIMER1_BASE
+	mov r2, #TIMER1_CMD
+	mov r3, #1
+	str r3, [r1, r2]
+	/*
+	*/
 loop:
 	// a way set all leds directly from buttons, perhaps useful later
 	// lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
 	// ldr r3, =0xFFFF00FF			// set all bits outside 8-15 to high
 	// orr r2, r2, r3			//
 
-	wfi
+	// wfi
+	orr r1, r1, r1
 	b loop
+
+// handler for system clock interrupts
+
+.thumb_func
+timer_interrupt:
+/*
+	mov r3, #GPIO_DIN			// get current values of buttons
+	ldr r2, [r6, r3]
+
+	lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
+	ldr r3, =0xFFFF00FF			// set all bits outside 8-15 to high
+	orr r2, r2, r3				//
+
+	// store r1 back to GPIO_DOUT for LEDs
+	mov r2, #GPIO_DOUT
+	str r1, [r5, r2]
+	*/
+
+	ldr r1, =TIMER1_BASE			// clear interrupt flag
+	mov r2, #TIMER1_IFC
+	mov r3, #1
+	str r3, [r1, r2]
+
+	bx lr
 
 // INFO:
 // it seems the buttons are originally initialized as 0xF7,
@@ -221,8 +277,9 @@ right_not_pushed:
 	mov r3, #GPIO_IFC
 	ldr r4, [r1, r2]
 	str r4, [r1, r3]
+
 	bx lr
 
 .thumb_func
 dummy_handler:
-	b .
+	bx lr
