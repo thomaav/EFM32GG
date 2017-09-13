@@ -29,7 +29,7 @@
 
 	/* External Interrupts */
 	.long   dummy_handler
-	.long   dummy_handler //read_buttons            /* GPIO even handler */
+	.long   read_buttons            /* GPIO even handler */
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
@@ -39,7 +39,7 @@
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
-	.long   dummy_handler //read_buttons            /* GPIO odd handler */
+	.long   read_buttons            /* GPIO odd handler */
 	.long   timer_interrupt		/* timer handler */
 	.long   dummy_handler
 	.long   dummy_handler
@@ -161,7 +161,7 @@ _reset:
 
 	ldr r1, =TIMER1_BASE			// store 14MHz in timer1_top for length
 	mov r2, #TIMER1_TOP			// between interrupts
-	ldr r3, =14000000
+	ldr r3, =50
 	str r3, [r1, r2]
 
 	mov r2, #TIMER1_IEN			// store 1 in timer1_ien to enable timer interrupt
@@ -176,6 +176,8 @@ _reset:
 	mov r2, #TIMER1_CMD
 	mov r3, #1
 	str r3, [r1, r2]
+	/*
+	*/
 loop:
 	// a way set all leds directly from buttons, perhaps useful later
 	// lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
@@ -187,8 +189,10 @@ loop:
 	b loop
 
 // handler for system clock interrupts
+
 .thumb_func
 timer_interrupt:
+/*
 	mov r3, #GPIO_DIN			// get current values of buttons
 	ldr r2, [r6, r3]
 
@@ -199,6 +203,7 @@ timer_interrupt:
 	// store r1 back to GPIO_DOUT for LEDs
 	mov r2, #GPIO_DOUT
 	str r1, [r5, r2]
+	*/
 
 	ldr r1, =TIMER1_BASE			// clear interrupt flag
 	mov r2, #TIMER1_IFC
