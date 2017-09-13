@@ -80,3 +80,12 @@
 
         SCR = 0xe000ed10
 
+	//////////////////////////////////////////////////////////////////////
+        // TIMER1 values
+	TIMER1_BASE = 0x40010400
+
+	TIMER1_CMD = 0x04
+	TIMER1_IEN = 0x0c
+	TIMER1_IFC = 0x18
+	TIMER1_TOP = 0x1c
+	TIMER1_CNT = 0x24
