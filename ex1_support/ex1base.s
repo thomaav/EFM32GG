@@ -128,21 +128,36 @@ loop:
 
 	cmp r7, #1  				// check if button is already pushed
 	it eq
-	beq loop					// if so, skip
+	beq loop				// if so, skip
 
-	add r8, r8, #1 				// add 1 to the binary counter
-	lsl r2, r8, #8
+	mov r7, #1				// set state to pushed, to skip next
+
+	ldr r1, =0x000000FE			// button (SW1), left for decrement
+	ldr r3, =0x000000FB			// button (SW3), right for increment
+
+	cmp r2, r1				// decrement
+	it eq
+	subeq r8, r8, #1
+
+	cmp r2, r3				// increment
+	it eq
+	addeq r8, r8, #1
+
+	ldr r1, =0x000000FD			// check if reset button (SW2) is pushed
+	cmp r2, r1
+	it eq					// if pushed, reset the counter
+	moveq r8, #0
+
+	lsl r4, r8, #8				// display binary counter on leds
 	ldr r1, =0xFF00
-	eor r2, r2, r1
-	mov r3, #GPIO_DOUT			// display binary counter on leds
-	str r2, [r5, r3]
-
-	mov r7, #1					// set state to pushed, to skip next
+	eor r4, r4, r1
+	mov r3, #GPIO_DOUT
+	str r4, [r5, r3]
 
 	b loop
 
 button_not_pushed:
-	mov r7, #0 					// set state to no longer pushed
+	mov r7, #0 				// set state to no longer pushed
 	b loop
 
 .thumb_func
