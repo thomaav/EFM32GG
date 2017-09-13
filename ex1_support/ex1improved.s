@@ -83,9 +83,14 @@
 _reset:
 	// GPIO_PA_BASE = r5
 	// GPIO_PC_BASE = r6
-	// r11 is used to ignore first interrupt, as it fires every startup
+	// BUTTON_STATE = r7
+	// BINARY_COUNTER = r8
+	// if r11 is set to 1, this means this is the initial
+	// interrupt that we want to ignore
 	ldr r5, =GPIO_PA_BASE			// base for GPIO
 	ldr r6, =GPIO_PC_BASE
+	mov r7, #0
+	mov r8, #0
 	mov r11, #1
 
 	//
@@ -106,10 +111,6 @@ _reset:
 	// set pins 8-15 to output
 	ldr r2, =0x55555555
 	str r2, [r5, #GPIO_MODEH]		// store 0x55555555 in GPIO_PA_MODEH
-
-	// turn on LEDS (use for initial LED values)
-	ldr r2, =0xFFFFF7FF
-	str r2, [r5, #GPIO_DOUT]
 
 	// set pins 0-7 to input
 	ldr r2, =0x33333333
@@ -139,27 +140,16 @@ _reset:
 	ldr r3, =0x802
 	str r3, [r2, #0]
 
-	//
 	// setup for energy mode
-	//
 	ldr r1, =SCR
 	mov r2, #0
 	mov r3, #0x6
 	str r3, [r1, r2]
 
 loop:
-	// a way set all leds directly from buttons, perhaps useful later
-	// lsl r2, r2, #0x8			// left shift value of buttons to fit LEDs
-	// ldr r3, =0xFFFF00FF			// set all bits outside 8-15 to high
-	// orr r2, r2, r3			//
-
 	wfi
 	b loop
 
-// INFO:
-// it seems the buttons are originally initialized as 0xF7,
-// having bit 4 unset - keep this in mind as it is probably
-// what is firing the first interrupt
 .thumb_func
 read_buttons:
 	// if r11 is set to 1, this means this is the initial
@@ -169,51 +159,12 @@ read_buttons:
 	moveq r11, #0
 	bxeq lr					// jump back to main loop
 
-	// first read current active LED to r1 and OR with 0xFFFF in
-	// higher order bits, as the microcontroller seemingly refuses
-	// to set it
-	mov r3, #GPIO_DOUT
-	ldr r1, [r5, r3]
-	ldr r3, =0xFFFF00FF
-	orr r1, r1, r3
-
-	mov r3, #GPIO_DIN			// get current values of buttons
-	ldr r2, [r6, r3]
-
-	ldr r3, =0x000000FE			// if only button 1 is pressed
-	ldr r4, =0x000000FB			// if only button 3 is pressed
-
-	// check if left button is pushed
-	cmp r2, r3
-	it ne
-	bne left_not_pushed			// skip code for pushing left button
-
-	// left was pushed
-	lsr r1, r1, #1				// right shift LED light
-	ldr r3, =0x0000FF00			// handle overflow
-	and r3, r3, r1
-	ldr r7, =0xFF00				// if all LED unset, then we have 0xFF00 here
-	cmp r3, r7
-	it eq
-	ldreq r1, =0xFFFF7FFF
-
-left_not_pushed:
-	// check if right button is pushed
-	cmp r2, r4
-	it ne
-	bne right_not_pushed			// skip code for pushing right button
-	lsl r1, r1, #1
-	ldr r3, =0x0000FF00			// handle overflow
-	and r3, r3, r1
-	ldr r7, =0xFF00				// if all LED unset, then we have 0xFF00 here
-	cmp r3, r7
-	it eq
-	ldreq r1, =0xFFFFFEFF
-
-right_not_pushed:
-	// store r1 back to GPIO_DOUT for LEDs
-	mov r2, #GPIO_DOUT
-	str r1, [r5, r2]
+	add r8, r8, #1 				// add 1 to the binary counter
+	lsl r2, r8, #8
+	ldr r1, =0xFF00
+	eor r2, r2, r1
+	mov r3, #GPIO_DOUT			// display binary counter on leds
+	str r2, [r5, r3]
 
 	// clear interrupt flag
 	ldr r1, =GPIO_BASE
@@ -221,6 +172,7 @@ right_not_pushed:
 	mov r3, #GPIO_IFC
 	ldr r4, [r1, r2]
 	str r4, [r1, r3]
+
 	bx lr
 
 .thumb_func
