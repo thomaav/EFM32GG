@@ -40,7 +40,7 @@
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   read_buttons            /* GPIO odd handler */
-	.long   timer_interrupt		/* timer handler */
+	.long   timer_interrupt /* timer handler */
 	.long   dummy_handler
 	.long   dummy_handler
 	.long   dummy_handler
@@ -86,6 +86,7 @@ _reset:
 	// r11 is used to ignore first interrupt, as it fires every startup
 	ldr r5, =GPIO_PA_BASE			// base for GPIO
 	ldr r6, =GPIO_PC_BASE
+	mov r10, #0
 	mov r11, #1
 
 	//
@@ -161,7 +162,7 @@ _reset:
 
 	ldr r1, =TIMER1_BASE			// store 14MHz in timer1_top for length
 	mov r2, #TIMER1_TOP			// between interrupts
-	ldr r3, =50
+	ldr r3, =0xFFFF
 	str r3, [r1, r2]
 
 	mov r2, #TIMER1_IEN			// store 1 in timer1_ien to enable timer interrupt
@@ -210,6 +211,17 @@ timer_interrupt:
 	mov r3, #1
 	str r3, [r1, r2]
 
+	add r10, #1
+	cmp r10, #1000
+	it ne
+	bne return
+
+	mov r10, #0
+	ldr r1, =0xFFFFFFFF
+	mov r2, #GPIO_DOUT
+	str r1, [r5, r2]
+
+return:
 	bx lr
 
 // INFO:
