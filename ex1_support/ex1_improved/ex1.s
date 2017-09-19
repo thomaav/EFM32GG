@@ -83,13 +83,11 @@
 _reset:
 	// GPIO_PA_BASE = r5
 	// GPIO_PC_BASE = r6
-	// BUTTON_STATE = r7
 	// BINARY_COUNTER = r8
 	// if r11 is set to 1, this means this is the initial
 	// interrupt that we want to ignore
 	ldr r5, =GPIO_PA_BASE			// base for GPIO
 	ldr r6, =GPIO_PC_BASE
-	mov r7, #0
 	mov r8, #0
 	mov r11, #1
 
