@@ -9,7 +9,7 @@ OBJCOPY=arm-none-eabi-objcopy
 LDFLAGS=-nostdlib
 ASFLAGS=-mcpu=cortex-m3 -mthumb -g
 
-LINKERSCRIPT=efm32gg.ld
+LINKERSCRIPT=../core/efm32gg.ld
 
 ex1.bin : ex1.elf
 	${OBJCOPY} -j .text -O binary $< $@
