@@ -162,8 +162,8 @@ read_buttons:
 	mov r3, #GPIO_DIN			// get current values of buttons
 	ldr r2, [r6, r3]
 
-	ldr r1, =0x000000FE			// button (SW1), left for decrement
-	ldr r3, =0x000000FB			// button (SW3), right for increment
+	ldr r1, =SW1				// button (SW1), left for decrement
+	ldr r3, =SW3				// button (SW3), right for increment
 
 	cmp r2, r1				// decrement
 	it eq
@@ -173,7 +173,7 @@ read_buttons:
 	it eq
 	addeq r8, r8, #1
 
-	ldr r1, =0x000000FD			// check if reset button (SW2) is pushed
+	ldr r1, =SW2				// check if reset button (SW2) is pushed
 	cmp r2, r1
 	it eq					// if pushed, reset the counter
 	moveq r8, #0

@@ -83,7 +83,7 @@
 _reset:
 	// GPIO_PA_BASE = r5
 	// GPIO_PC_BASE = r6
-	// BUTTON_STATE = r7
+	// BUTTON_STATE = r7			// for toggling push of buttons to imitate interrupts
 	// BINARY_COUNTER = r8
 	ldr r5, =GPIO_PA_BASE			// base for GPIO
 	ldr r6, =GPIO_PC_BASE
@@ -121,19 +121,19 @@ loop:
 	mov r3, #GPIO_DIN			// get current values of buttons
 	ldr r2, [r6, r3]
 
-	ldr r3, =0xFF 				// skip if no buttons are pushed
-	cmp r2, r3
+	ldr r3, =0xFF 				// skip if no buttons are pushed (lower 8 bits)
+	cmp r2, r3				// remember assert low (thus 0xFF)
 	it eq
 	beq button_not_pushed
 
 	cmp r7, #1  				// check if button is already pushed
-	it eq
+	it eq					// to imitate interrupts
 	beq loop				// if so, skip
 
 	mov r7, #1				// set state to pushed, to skip next
 
-	ldr r1, =0x000000FE			// button (SW1), left for decrement
-	ldr r3, =0x000000FB			// button (SW3), right for increment
+	ldr r1, =SW1				// button (SW1), left for decrement
+	ldr r3, =SW3				// button (SW3), right for increment
 
 	cmp r2, r1				// decrement
 	it eq
@@ -143,13 +143,13 @@ loop:
 	it eq
 	addeq r8, r8, #1
 
-	ldr r1, =0x000000FD			// check if reset button (SW2) is pushed
+	ldr r1, =SW2				// check if reset button (SW2) is pushed
 	cmp r2, r1
 	it eq					// if pushed, reset the counter
 	moveq r8, #0
 
-	lsl r4, r8, #8				// display binary counter on leds
-	ldr r1, =0xFF00
+	lsl r4, r8, #8				// display binary counter on leds last to
+	ldr r1, =0xFF00				// reflect button push
 	eor r4, r4, r1
 	mov r3, #GPIO_DOUT
 	str r4, [r5, r3]
