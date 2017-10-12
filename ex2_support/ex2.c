@@ -22,6 +22,8 @@ void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
 
+uint16_t tick_counter = 0;
+
 int main(void)
 {
 	// setup all peripherals

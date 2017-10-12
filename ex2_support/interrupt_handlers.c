@@ -22,6 +22,15 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	 * TODO feed new samples to the DAC remember to clear the pending
 	 * interrupt by writing 1 to TIMER1_IFC
 	 */
+	// use global tick counter from ex2.c
+	extern uint16_t tick_counter;
+
+	if (++tick_counter >= 224) {
+		tick_counter = 0;
+	}
+
+	// clear interrupt flag
+	*TIMER1_IFC = 0x1;
 }
 
 /*
