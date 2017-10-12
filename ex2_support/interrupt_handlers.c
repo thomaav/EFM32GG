@@ -3,6 +3,12 @@
 
 #include "efm32gg.h"
 
+void GPIO_IRQHandler()
+{
+	// clear interrupt
+	*GPIO_IFC = *GPIO_IF;
+}
+
 /*
  * TIMER1 interrupt handler 
  */
@@ -19,10 +25,8 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
  */
 void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
 {
-	/*
-	 * TODO handle button pressed event, remember to clear pending
-	 * interrupt 
-	 */
+	// we don't care whether it is even or odd
+	GPIO_IRQHandler();
 }
 
 /*
@@ -30,8 +34,6 @@ void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
  */
 void __attribute__ ((interrupt)) GPIO_ODD_IRQHandler()
 {
-	/*
-	 * TODO handle button pressed event, remember to clear pending
-	 * interrupt 
-	 */
+	// we don't care whether it is even or odd
+	GPIO_IRQHandler();
 }

@@ -17,6 +17,7 @@
 /*
  * Declaration of peripheral setup functions 
  */
+void setupGPIO();
 void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
@@ -26,16 +27,12 @@ void setupNVIC();
  */
 int main(void)
 {
-	/*
-	 * Call the peripheral setup functions 
-	 */
+	// setup all peripherals
 	setupGPIO();
 	setupDAC();
 	setupTimer(SAMPLE_PERIOD);
 
-	/*
-	 * Enable interrupt handling 
-	 */
+	// enable interrupt handling
 	setupNVIC();
 
 	/*
@@ -55,8 +52,14 @@ void setupNVIC()
 	 * handling: - the peripheral must generate an interrupt signal - the
 	 * NVIC must be configured to make the CPU handle the signal You will
 	 * need TIMER1, GPIO odd and GPIO even interrupt handling for this
-	 * assignment. 
+	 * assignment.
 	 */
+
+	// to enable GPIO-interrupts, write bits 1 and 11
+	*ISER0 |= 0x802;
+
+	// to enable timer-interrupts, write bit 12
+	*ISER0 |= (1 << 6);
 }
 
 /*
