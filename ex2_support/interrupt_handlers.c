@@ -5,23 +5,27 @@
 
 void GPIO_IRQHandler()
 {
+	// write button values to leds to test
+	uint32_t btn_values = *GPIO_PC_DIN;
+	*GPIO_PA_DOUT = (btn_values << 8);
+
 	// clear interrupt
 	*GPIO_IFC = *GPIO_IF;
 }
 
 /*
- * TIMER1 interrupt handler 
+ * TIMER1 interrupt handler
  */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 {
 	/*
 	 * TODO feed new samples to the DAC remember to clear the pending
-	 * interrupt by writing 1 to TIMER1_IFC 
+	 * interrupt by writing 1 to TIMER1_IFC
 	 */
 }
 
 /*
- * GPIO even pin interrupt handler 
+ * GPIO even pin interrupt handler
  */
 void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
 {
@@ -30,7 +34,7 @@ void __attribute__ ((interrupt)) GPIO_EVEN_IRQHandler()
 }
 
 /*
- * GPIO odd pin interrupt handler 
+ * GPIO odd pin interrupt handler
  */
 void __attribute__ ((interrupt)) GPIO_ODD_IRQHandler()
 {

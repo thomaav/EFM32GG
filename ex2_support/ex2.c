@@ -22,9 +22,6 @@ void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
 
-/*
- * Your code will start executing here 
- */
 int main(void)
 {
 	// setup all peripherals
@@ -46,15 +43,6 @@ int main(void)
 
 void setupNVIC()
 {
-	/*
-	 * TODO use the NVIC ISERx registers to enable handling of
-	 * interrupt(s) remember two things are necessary for interrupt
-	 * handling: - the peripheral must generate an interrupt signal - the
-	 * NVIC must be configured to make the CPU handle the signal You will
-	 * need TIMER1, GPIO odd and GPIO even interrupt handling for this
-	 * assignment.
-	 */
-
 	// to enable GPIO-interrupts, write bits 1 and 11
 	*ISER0 |= 0x802;
 
