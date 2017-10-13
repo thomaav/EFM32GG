@@ -34,7 +34,7 @@ uint16_t tick_counter = 0;
 // toggle for button press, as we cannot get interrupted within
 // another interrupt
 _Bool button_press = 0;
-uint32_t buttons_pressed;
+uint32_t buttons_pressed = 0;
 
 // current playing song
 static const struct melody empty_melody;
@@ -60,12 +60,46 @@ void tick()
 		*GPIO_PA_DOUT ^= 0xFFFF;
 	}
 
-	// set current_note every tick for simplicity
+	// if a button is pressed, change melody
+	if (button_press) {
+		button_press = 0;
+		switch (buttons_pressed) {
+		case 0xFE:
+			current_melody = create_melody(lisa_notes, lisa_note_lengths, lisa_length);
+			break;
+		case 0xFD:
+			current_melody = create_melody(windows_xp_startup_notes, windows_xp_startup_note_lengths,
+						       windows_xp_startup_length);
+			break;
+		case 0xFB:
+			current_melody = create_melody(mario_game_over_notes, mario_game_over_note_lengths,
+						       mario_game_over_length);
+			break;
+		case 0xF7:
+			current_melody = create_melody(mario_1up_notes, mario_1up_note_lengths,
+						       mario_1up_length);
+			break;
+		case 0xDF:
+			current_melody = create_melody(laser_shot_notes, laser_shot_note_lengths,
+						       laser_shot_length);
+			break;
+		case 0xBF:
+			current_melody = create_melody(explosion_notes, explosion_note_lengths,
+						       explosion_length);
+			break;
+		default:
+			break;
+		}
+	}
+
+	// if there is no melody, play nothing
 	if (!current_melody.notes) {
 		return;
 	}
 
-	// count msec every 10th msec (1/100th of the sample rate)
+	// count msec every 10th msec (1/100th of the sample rate), as
+	// it is more precise than every ms when the sample rate is
+	// 44100, which is standard
 	if (!(tick_counter % (SAMPLE_RATE / 100))) {
 		if (current_melody.msec_left > 0) {
 			// don't let msec left of note become negative, to allow for
@@ -104,8 +138,6 @@ void tick()
 
 int main(void)
 {
-	struct melody lisa_melody = create_melody(lisa_notes, lisa_note_lengths, lisa_length);
-
 	// setup all peripherals
 	setupGPIO();
 	setupDAC();
@@ -114,8 +146,9 @@ int main(void)
 	// enable interrupt handling
 	setupNVIC();
 
-	// initialize a song to test
-	current_melody = lisa_melody;
+	// use windows xp startup as startup melody
+	current_melody = create_melody(windows_xp_startup_notes, windows_xp_startup_note_lengths,
+				       windows_xp_startup_length);
 
 	while (true) {
 		tick();
@@ -126,11 +159,14 @@ int main(void)
 
 void setupNVIC()
 {
+	// we use GPIO-interrupts, as we have already used
+	// busy-polling with it in exercise 1, and see no reason why
+	// we should bother to not just use the interrupts on this
+	// one, and do the busy-waiting part with the timer, as the
+	// task asks of us
+
 	// to enable GPIO-interrupts, write bits 1 and 11
 	*ISER0 |= 0x802;
-
-	// to enable timer-interrupts, write bit 12
-	/* *ISER0 |= (1 << 12); */
 }
 
 /*

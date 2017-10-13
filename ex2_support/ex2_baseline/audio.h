@@ -99,3 +99,23 @@ uint16_t lisa_notes[22];
 int16_t lisa_note_lengths[22];
 uint16_t lisa_length;
 
+uint16_t windows_xp_startup_notes[7];
+int16_t windows_xp_startup_note_lengths[7];
+uint16_t windows_xp_startup_length;
+
+uint16_t mario_game_over_notes[15];
+int16_t mario_game_over_note_lengths[15];
+uint16_t mario_game_over_length;
+
+// mario 1up sound
+uint16_t mario_1up_notes[6];
+int16_t mario_1up_note_lengths[6];
+uint16_t mario_1up_length;
+
+uint16_t laser_shot_notes[9];
+int16_t laser_shot_note_lengths[9];
+uint16_t laser_shot_length;
+
+uint16_t explosion_notes[18];
+int16_t explosion_note_lengths[18];
+uint16_t explosion_length;
