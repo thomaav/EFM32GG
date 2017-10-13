@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "efm32gg.h"
+#include "audio.h"
 
 /*
  * TODO calculate the appropriate sample period for the sound wave(s) you 
@@ -22,7 +23,20 @@ void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
 
+uint16_t max_amplitude = 0xF;
+
+// non-global audio values
+uint16_t current_treble_note = 0;
+uint16_t current_bass_note = 0;
+int16_t msec_left = 0;
+_Bool square_high_treble = 0;
+_Bool square_high_bass = 0;
 uint16_t tick_counter = 0;
+
+// toggle for button press, as we cannot get interrupted within
+// another interrupt
+_Bool button_press = 0;
+uint32_t buttons_pressed;
 
 int main(void)
 {
@@ -38,7 +52,20 @@ int main(void)
 	 * TODO for higher energy efficiency, sleep while waiting for
 	 * interrupts instead of infinite loop for busy-waiting 
 	 */
-	while (1) ;
+	while (true) {
+		if (button_press) {
+			button_press = 0;
+			if (buttons_pressed == 0xFE) {
+				laser_shot();
+			} else if (buttons_pressed == 0xFD) {
+				explosion();
+			} else if (buttons_pressed == 0xFB) {
+				mario_game_over();
+			} else if (buttons_pressed == 0xF7) {
+				windows_xp_startup();
+			}
+		}
+	}
 
 	return 0;
 }
@@ -49,7 +76,7 @@ void setupNVIC()
 	*ISER0 |= 0x802;
 
 	// to enable timer-interrupts, write bit 12
-	*ISER0 |= (1 << 6);
+	*ISER0 |= (1 << 12);
 }
 
 /*
