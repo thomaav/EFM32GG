@@ -6,7 +6,7 @@
 /*
  * function to set up GPIO mode and interrupts
  */
-void setupGPIO()
+void setup_GPIO()
 {
 	// general setup for GPIO
 	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_GPIO;	// (1 << 13) to enable clock

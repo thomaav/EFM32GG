@@ -7,7 +7,7 @@
 /*
  * function to setup the timer
  */
-void setupTimer(uint16_t period)
+void setup_Timer()
 {
 	// general setup for Timer1 interrupts. we enable interrupts
 	// when the 16-bit register ticks to 62500 (0xF424) since 14

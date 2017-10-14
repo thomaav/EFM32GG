@@ -5,24 +5,10 @@
 #include "efm32gg.h"
 #include "audio.h"
 
-/*
- * TODO calculate the appropriate sample period for the sound wave(s) you 
- * want to generate. The core clock (which the timer clock is derived
- * from) runs at 14 MHz by default. Also remember that the timer counter
- * registers are 16 bits. 
- */
-/*
- * The period between sound samples, in clock cycles 
- */
-#define   SAMPLE_PERIOD   0
-
-/*
- * Declaration of peripheral setup functions 
- */
-void setupGPIO();
-void setupTimer(uint32_t period);
-void setupDAC();
-void setupNVIC();
+void setup_GPIO();
+void setup_Timer();
+void setup_DAC();
+void setup_NVIC();
 
 // how loud?
 uint16_t max_amplitude = 0xF;
@@ -139,12 +125,12 @@ void tick()
 int main(void)
 {
 	// setup all peripherals
-	setupGPIO();
-	setupDAC();
-	setupTimer(SAMPLE_PERIOD);
+	setup_GPIO();
+	setup_DAC();
+	setup_Timer();
 
 	// enable interrupt handling
-	setupNVIC();
+	setup_NVIC();
 
 	// use windows xp startup as startup melody
 	current_melody = create_melody(windows_xp_startup_notes, windows_xp_startup_note_lengths,
@@ -157,7 +143,7 @@ int main(void)
 	return 0;
 }
 
-void setupNVIC()
+void setup_NVIC()
 {
 	// we use GPIO-interrupts, as we have already used
 	// busy-polling with it in exercise 1, and see no reason why

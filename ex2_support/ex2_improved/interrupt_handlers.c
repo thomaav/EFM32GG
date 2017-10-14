@@ -3,9 +3,9 @@
 
 #include "audio.h"
 #include "button.h"
-#include "melody.h"
-#include "led.h"
 #include "efm32gg.h"
+#include "led.h"
+#include "melody.h"
 
 // we don't care whether the interrupt is odd or even, just call this
 void GPIO_IRQHandler()
