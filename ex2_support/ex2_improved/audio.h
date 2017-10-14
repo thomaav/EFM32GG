@@ -1,17 +1,23 @@
+// we set BPM statically, as using a dynamic BPM for each melody we
+// create would require more work to keep the precision of our
+// counting acceptable
 #define SAMPLE_RATE 44100
 #define BPM 120
 #define BPS (BPM / 60)
-#define BREATH 10
+#define BREATH 10 // used if legato is not wanted
+#define MAX_AMPLITUDE 0xF
 
+// definition for note durations based on our BPM
 #define WHOLE (HALF * 2)
 #define HALF (FOURTH * 2)
 #define FOURTH (1000 / BPS)
 #define EIGTH (FOURTH / 2)
 #define SIXTEENTH (EIGTH / 2)
 #define THIRTYSECOND (SIXTEENTH / 2)
-#define TRIPLET 3
+#define TRIPLET 3 // a triplet divides any single note into three equal ones
 #define PAUSE 0
 
+// given frequencies for common notes
 #define C1   32
 #define Db1  34
 #define D1   36
@@ -77,13 +83,16 @@
 #define Bb5 932
 #define B5  987
 
+// base struct for a note
 struct note
 {
-	// meta
 	uint16_t frequency;
 	int16_t length;
 };
 
+// a melody keeps arrays of treble and bass notes for two channels
+// (left, right), however, this requires that they are the same
+// length, so keep this in mind when creating melodies
 struct melody
 {
 	// meta
@@ -95,6 +104,9 @@ struct melody
 	uint16_t current_note;
 };
 
+// we want a player in our main program that keeps track of what is
+// the current melody of of the program, and how much is left of the
+// note that we are currently playing
 struct player
 {
 	struct melody current_melody;
@@ -104,6 +116,8 @@ struct player
 struct melody create_melody(struct note *treble_notes, struct note *bass_notes, uint16_t length);
 void set_current_melody(struct player *sound_player, struct melody melody);
 
+// setup melodies is needed to actually bind our melodies correctly at
+// runtime, as structs cannot be usted for const initiation in C
 void setup_melodies();
 
 // songs / melodies

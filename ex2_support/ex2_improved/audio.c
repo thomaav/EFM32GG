@@ -3,10 +3,9 @@
 
 #include "audio.h"
 
-extern uint16_t current_treble_note;
-extern uint16_t current_bass_note;
-extern int16_t msec_left;
-
+// create a melody from treble and bass notes, and return it do not
+// allocate the melody on the heap and return a pointer as one would
+// usually do, as we had some trouble with linking when we used malloc
 struct melody create_melody(struct note *treble_notes, struct note *bass_notes, uint16_t length)
 {
 	struct melody new_melody;
@@ -19,6 +18,7 @@ struct melody create_melody(struct note *treble_notes, struct note *bass_notes, 
 	return new_melody;
 }
 
+// set the current melody of the player pointed to to be a new melody
 void set_current_melody(struct player *sound_player, struct melody melody)
 {
 	sound_player->current_melody = melody;
@@ -47,6 +47,7 @@ struct note windows_xp_startup_melody_bass_notes[7] = {
 	{ .frequency = Bb3, .length = FOURTH + EIGTH }
 };
 
+// bind melodies
 void setup_melodies()
 {
 	windows_xp_startup_melody = create_melody(windows_xp_startup_melody_treble_notes,

@@ -4,10 +4,8 @@
 #include "audio.h"
 #include "efm32gg.h"
 
-/*
- * function to setup the timer
- */
-void setup_Timer(uint16_t period)
+// setup for timer to generate interrupts
+void setup_Timer()
 {
 	// general setup for Timer1 interrupts. we enable interrupts
 	// when the 16-bit register ticks to 62500 (0xF424) since 14

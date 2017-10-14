@@ -6,6 +6,7 @@
 #include "led.h"
 #include "efm32gg.h"
 
+// we don't care whether the interrupt is odd or even, just call this
 void GPIO_IRQHandler()
 {
 	// we need the player to possible change the current melody
@@ -40,9 +41,6 @@ void GPIO_IRQHandler()
 	*GPIO_IFC = *GPIO_IF;
 }
 
-/*
- * TIMER1 interrupt handler
- */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 {
 	// clear the interrupt
@@ -54,9 +52,6 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 
 	// fetch current melody of the player for readability
 	struct melody *current_melody = &(sound_player.current_melody);
-
-	// how loud are we?
-	extern uint16_t max_amplitude;
 
 	// flags for toggling high/low for square wave
 	extern _Bool square_high_treble;
@@ -116,8 +111,8 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 		square_high_bass = !square_high_bass;
 	}
 
-	*DAC0_CH0DATA = square_high_treble ? max_amplitude : 0x000;
-	*DAC0_CH1DATA = square_high_bass ? max_amplitude : 0x000;
+	*DAC0_CH0DATA = square_high_treble ? MAX_AMPLITUDE : 0x000;
+	*DAC0_CH1DATA = square_high_bass ? MAX_AMPLITUDE : 0x000;
 }
 
 /*

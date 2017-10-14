@@ -1,21 +1,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <stdlib.h>
+
 #include "efm32gg.h"
 #include "audio.h"
-
-#define   SAMPLE_PERIOD   0
 
 // prototypes of peripheral setup functions must be known, as they
 // have no header files for only one function
 void setup_GPIO();
-void setup_Timer(uint32_t period);
+void setup_Timer();
 void setup_DAC();
 void setup_NVIC();
-
-// how loud? remember that max is 12-bit (it is unlikely that we will
-// ever use such a high value)
-uint16_t max_amplitude = 0xF;
 
 // non-global audio values to toggle high/low of square wave
 _Bool square_high_treble = 0;
@@ -31,7 +27,7 @@ int main(void)
 	// setup all peripherals
 	setup_GPIO();
 	setup_DAC();
-	setup_Timer(SAMPLE_PERIOD);
+	setup_Timer();
 
 	// enable interrupt handling
 	setup_NVIC();

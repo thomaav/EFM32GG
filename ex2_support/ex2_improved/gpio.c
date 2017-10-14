@@ -3,9 +3,7 @@
 
 #include "efm32gg.h"
 
-/*
- * function to set up GPIO mode and interrupts
- */
+// setup for LEDs, buttons, and enabling interrupts
 void setup_GPIO()
 {
 	// general setup for GPIO

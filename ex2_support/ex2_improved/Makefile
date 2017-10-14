@@ -2,6 +2,9 @@
 #
 # Exercise 2, TDT4258
 
+# differences from original:
+# added: link with audio.o, button.o, led.o
+
 CC=arm-none-eabi-gcc
 LD=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy

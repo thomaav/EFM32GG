@@ -3,6 +3,7 @@
 
 #include "efm32gg.h"
 
+// setup to enable DAC left and right channels
 void setup_DAC()
 {
 	// general setup for DAC
