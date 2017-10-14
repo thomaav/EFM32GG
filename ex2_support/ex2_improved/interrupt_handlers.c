@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "audio.h"
+#include "button.h"
 #include "efm32gg.h"
 
 void GPIO_IRQHandler()
@@ -11,17 +12,17 @@ void GPIO_IRQHandler()
 
 	uint32_t buttons_pressed = *GPIO_PC_DIN;
 
-	if (buttons_pressed == 0xFE) {
+	if (buttons_pressed == SW1) {
 		set_current_melody(&sound_player, windows_xp_startup_melody);
-	} else if (buttons_pressed == 0xFD) {
+	} else if (buttons_pressed == SW2) {
 		;
-	} else if (buttons_pressed == 0xFB) {
+	} else if (buttons_pressed == SW3) {
 		;
-	} else if (buttons_pressed == 0xF7) {
+	} else if (buttons_pressed == SW4) {
 		;
-	} else if (buttons_pressed == 0xDF) {
+	} else if (buttons_pressed == SW5) {
 		;
-	} else if (buttons_pressed == 0xBF) {
+	} else if (buttons_pressed == SW6) {
 		;
 	}
 
