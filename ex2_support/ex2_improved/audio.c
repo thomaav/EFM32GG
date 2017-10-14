@@ -7,6 +7,23 @@ extern uint16_t current_treble_note;
 extern uint16_t current_bass_note;
 extern int16_t msec_left;
 
+struct melody create_melody(struct note *notes, uint16_t length)
+{
+	struct melody new_melody;
+
+	new_melody.notes = notes;
+	new_melody.length = length;
+	new_melody.current_note = 0;
+
+	return new_melody;
+}
+
+void set_current_melody(struct player *sound_player, struct melody melody)
+{
+	sound_player->current_melody = melody;
+	sound_player->msec_left_current_note = melody.notes[0].length;
+}
+
 void _play_sounds(uint16_t treble_note, uint16_t bass_note, uint16_t msec, _Bool legato)
 {
 	// add BREATH between notes by playing nothing the last BREATH
@@ -201,4 +218,21 @@ void explosion()
 		_play_sounds(Db2, Db1, 10, true);
 		_play_sounds(C2, C1, 10, true);
 	}
+}
+
+// these are constant, use them in the global scope, and initialize
+// melodies in setup_melodies
+struct note windows_xp_startup_melody_notes[7] = {
+	{ .frequency = Eb5, .length = EIGTH },
+	{ .frequency = Eb4, .length = SIXTEENTH },
+	{ .frequency = Bb4, .length = SIXTEENTH },
+	{ .frequency = PAUSE, .length = SIXTEENTH },
+	{ .frequency = Ab4, .length = EIGTH + SIXTEENTH },
+	{ .frequency = Eb5, .length = EIGTH },
+	{ .frequency = Bb4, .length = FOURTH + EIGTH }
+};
+
+void setup_melodies()
+{
+	windows_xp_startup_melody = create_melody(windows_xp_startup_melody_notes, 7);
 }

@@ -6,10 +6,24 @@
 
 void GPIO_IRQHandler()
 {
-	extern _Bool button_press;
-	extern uint32_t buttons_pressed;
-	button_press = 1;
-	buttons_pressed = *GPIO_PC_DIN;
+	// we need the player to possible change the current melody
+	extern struct player sound_player;
+
+	uint32_t buttons_pressed = *GPIO_PC_DIN;
+
+	if (buttons_pressed == 0xFE) {
+		set_current_melody(&sound_player, windows_xp_startup_melody);
+	} else if (buttons_pressed == 0xFD) {
+		;
+	} else if (buttons_pressed == 0xFB) {
+		;
+	} else if (buttons_pressed == 0xF7) {
+		;
+	} else if (buttons_pressed == 0xDF) {
+		;
+	} else if (buttons_pressed == 0xBF) {
+		;
+	}
 
 	// clear interrupt
 	*GPIO_IFC = *GPIO_IF;
@@ -20,37 +34,54 @@ void GPIO_IRQHandler()
  */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 {
+	// sound player needed
+	extern struct player sound_player;
+	extern struct melody empty_melody;
+
 	// globals needed
 	extern uint16_t tick_counter;
 	extern uint16_t max_amplitude;
+
 	extern _Bool square_high_treble;
 	extern _Bool square_high_bass;
-	extern int16_t msec_left;
 
 	// fetch current note
-	extern uint16_t current_treble_note;
 	extern uint16_t current_bass_note;
-
-	uint16_t samples_per_period_treble = SAMPLE_RATE / current_treble_note;
-	uint16_t samples_per_period_bass = SAMPLE_RATE / current_bass_note;
 
 	++tick_counter;
 
-	// count msec
+	// test that all is good by blinking the LEDs every second
+	if (tick_counter == SAMPLE_RATE) {
+		tick_counter = 0;
+		*GPIO_PA_DOUT ^= 0xFFFF;
+	}
+
+	if (!sound_player.current_melody.notes) {
+		*TIMER1_IFC = 0x1;
+		return;
+	}
+
+	struct melody *current_melody = &(sound_player.current_melody);
 	if (!(tick_counter % (SAMPLE_RATE / 100))) {
-		if (msec_left > 0) {
-			if (msec_left - 10 < 0) {
-				msec_left = 0;
+		if (sound_player.msec_left_current_note > 0) {
+			if (sound_player.msec_left_current_note - 10 <= 0) {
+				if (current_melody->current_note < current_melody->length) {
+					++current_melody->current_note;
+					uint16_t next_note_idx = current_melody->current_note;
+					uint16_t next_note_length = current_melody->notes[next_note_idx].length;
+					sound_player.msec_left_current_note = next_note_length;
+				} else {
+					set_current_melody(&sound_player, empty_melody);
+				}
 			} else {
-				msec_left -= 10;
+				sound_player.msec_left_current_note -= 10;
 			}
 		}
 	}
 
-	if (!msec_left) {
-		*TIMER1_IFC = 0x1;
-		return;
-	}
+	uint16_t next_treble_note_frequency = current_melody->notes[current_melody->current_note].frequency;
+	uint16_t samples_per_period_treble = SAMPLE_RATE / next_treble_note_frequency;
+	uint16_t samples_per_period_bass = SAMPLE_RATE / current_bass_note;
 
 	if (!(tick_counter % (samples_per_period_treble / 2))) {
 		square_high_treble = !square_high_treble;

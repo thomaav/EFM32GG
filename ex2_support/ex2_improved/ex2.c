@@ -4,15 +4,6 @@
 #include "efm32gg.h"
 #include "audio.h"
 
-/*
- * TODO calculate the appropriate sample period for the sound wave(s) you 
- * want to generate. The core clock (which the timer clock is derived
- * from) runs at 14 MHz by default. Also remember that the timer counter
- * registers are 16 bits. 
- */
-/*
- * The period between sound samples, in clock cycles 
- */
 #define   SAMPLE_PERIOD   0
 
 /*
@@ -33,10 +24,9 @@ _Bool square_high_treble = 0;
 _Bool square_high_bass = 0;
 uint16_t tick_counter = 0;
 
-// toggle for button press, as we cannot get interrupted within
-// another interrupt
-_Bool button_press = 0;
-uint32_t buttons_pressed;
+// initialize a sound player, and an empty one for no sound
+struct player sound_player;
+struct melody empty_melody;
 
 int main(void)
 {
@@ -48,29 +38,18 @@ int main(void)
 	// enable interrupt handling
 	setupNVIC();
 
+	// initialize all music
+	setup_melodies();
+
+	// startup with windows_xp
+	set_current_melody(&sound_player, windows_xp_startup_melody);
+
 	/*
 	 * TODO for higher energy efficiency, sleep while waiting for
-	 * interrupts instead of infinite loop for busy-waiting 
+	 * interrupts instead of infinite loop for busy-waiting
 	 */
 	while (true) {
 		__asm__("wfi");
-
-		if (button_press) {
-			button_press = 0;
-			if (buttons_pressed == 0xFE) {
-				laser_shot();
-			} else if (buttons_pressed == 0xFD) {
-				explosion();
-			} else if (buttons_pressed == 0xFB) {
-				mario_game_over();
-			} else if (buttons_pressed == 0xF7) {
-				windows_xp_startup();
-			} else if (buttons_pressed == 0xDF) {
-				mario_1up();
-			} else if (buttons_pressed == 0xBF) {
-				mario_power_up();
-			}
-		}
 	}
 
 	return 0;
