@@ -13,7 +13,7 @@ void setup_Timer();
 void setup_DAC();
 void setup_NVIC();
 
-// non-global audio values to toggle high/low of square wave
+// global audio values to toggle high/low of square wave
 _Bool square_high_treble = 0;
 _Bool square_high_bass = 0;
 uint16_t tick_counter = 0;

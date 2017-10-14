@@ -20,14 +20,19 @@ void GPIO_IRQHandler()
 		set_current_melody(&sound_player, windows_xp_startup_melody);
 		break;
 	case SW2:
+		set_current_melody(&sound_player, mario_game_over_melody);
 		break;
 	case SW3:
+		set_current_melody(&sound_player, mario_1up_melody);
 		break;
 	case SW4:
+		set_current_melody(&sound_player, mario_power_up_melody);
 		break;
 	case SW5:
+		set_current_melody(&sound_player, laser_shot_melody);
 		break;
 	case SW6:
+		set_current_melody(&sound_player, explosion_melody);
 		break;
 	case SW7:
 		break;
