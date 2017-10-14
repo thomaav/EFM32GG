@@ -18,7 +18,7 @@ ex2.bin : ex2.elf
 	${OBJCOPY} -O binary $< $@
 
 ex2.elf : ex2.o timer.o dac.o gpio.o interrupt_handlers.o audio.o button.o led.o melody.o
-	${LD} -T ${LINKERSCRIPT} $^ -o $@ ${LDFLAGS} 
+	${LD} -T ${LINKERSCRIPT} $^ -o $@ ${LDFLAGS}
 
 %.o : %.c
 	${CC} ${CFLAGS} -c $< -o $@
@@ -33,4 +33,4 @@ upload :
 
 .PHONY : clean
 clean :
-	-rm -rf *.o *.elf *.bin *.hex 
+	-rm -rf *.o *.elf *.bin *.hex

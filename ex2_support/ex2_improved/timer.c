@@ -14,8 +14,8 @@ void setup_Timer()
 
 	uint16_t max_tick = 14000000 / SAMPLE_RATE;
 
-	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_TIMER1; // enable clock
+	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_TIMER1;	// enable clock
 	*TIMER1_TOP = max_tick;
-	*TIMER1_IEN = 0x1; // enable interrupt generation
-	*TIMER1_CMD = 0x1; // start timer
+	*TIMER1_IEN = 0x1;	// enable interrupt generation
+	*TIMER1_CMD = 0x1;	// start timer
 }

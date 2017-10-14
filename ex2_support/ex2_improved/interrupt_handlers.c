@@ -73,12 +73,10 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 		tick_counter = 0;
 		toggle_led(ALL);
 	}
-
 	// if there are no treble notes to play, stop
 	if (!(sound_player.current_melody.treble_notes)) {
 		return;
 	}
-
 	// here we assume that treble and bass are the same lengths,
 	// with same length notes, which means pauses must be added if
 	// nothing is to be played in one of them
@@ -92,10 +90,19 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 			// here we need to check whether the note we
 			// just played was the last note of the melody
 			++(current_melody->current_note);
-			if (current_melody->current_note < current_melody->length) {
-				uint16_t next_note_idx = current_melody->current_note;
-				uint16_t next_note_length = current_melody->treble_notes[next_note_idx].length;
-				sound_player.msec_left_current_note = next_note_length;
+
+			// change length of player's current note
+			if (current_melody->current_note <
+			    current_melody->length) {
+				uint16_t next_note_idx =
+				    current_melody->current_note;
+
+				uint16_t next_note_length =
+				    current_melody->
+				    treble_notes[next_note_idx].length;
+
+				sound_player.msec_left_current_note =
+				    next_note_length;
 			} else {
 				set_current_melody(&sound_player, empty_melody);
 			}
@@ -104,10 +111,15 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 		}
 	}
 
-	uint16_t next_treble_note_frequency = current_melody->treble_notes[current_melody->current_note].frequency;
-	uint16_t next_bass_note_frequency = current_melody->bass_notes[current_melody->current_note].frequency;
-	uint16_t samples_per_period_treble = SAMPLE_RATE / next_treble_note_frequency;
-	uint16_t samples_per_period_bass = SAMPLE_RATE / next_bass_note_frequency;
+	uint16_t next_treble_note_frequency =
+	    current_melody->treble_notes[current_melody->
+					 current_note].frequency;
+	uint16_t next_bass_note_frequency =
+	    current_melody->bass_notes[current_melody->current_note].frequency;
+	uint16_t samples_per_period_treble =
+	    SAMPLE_RATE / next_treble_note_frequency;
+	uint16_t samples_per_period_bass =
+	    SAMPLE_RATE / next_bass_note_frequency;
 
 	if (!(tick_counter % (samples_per_period_treble / 2))) {
 		square_high_treble = !square_high_treble;

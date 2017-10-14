@@ -19,6 +19,6 @@ void setup_GPIO()
 
 	// enable GPIO interrupts
 	*GPIO_EXTIPSELL = 0x22222222;
-	*GPIO_EXTIFALL = 0xFF; // interrupts on 1->0 transition for buttons
+	*GPIO_EXTIFALL = 0xFF;	// interrupts on 1->0 transition for buttons
 	*GPIO_IEN = 0xFF;
 }

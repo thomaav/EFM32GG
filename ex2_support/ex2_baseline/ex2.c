@@ -45,44 +45,53 @@ void tick()
 		tick_counter = 0;
 		*GPIO_PA_DOUT ^= 0xFFFF;
 	}
-
 	// if a button is pressed, change melody
 	if (button_press) {
 		button_press = 0;
 		switch (buttons_pressed) {
 		case 0xFE:
-			current_melody = create_melody(lisa_notes, lisa_note_lengths, lisa_length);
+			current_melody =
+			    create_melody(lisa_notes, lisa_note_lengths,
+					  lisa_length);
 			break;
 		case 0xFD:
-			current_melody = create_melody(windows_xp_startup_notes, windows_xp_startup_note_lengths,
-						       windows_xp_startup_length);
+			current_melody =
+			    create_melody(windows_xp_startup_notes,
+					  windows_xp_startup_note_lengths,
+					  windows_xp_startup_length);
 			break;
 		case 0xFB:
-			current_melody = create_melody(mario_game_over_notes, mario_game_over_note_lengths,
-						       mario_game_over_length);
+			current_melody =
+			    create_melody(mario_game_over_notes,
+					  mario_game_over_note_lengths,
+					  mario_game_over_length);
 			break;
 		case 0xF7:
-			current_melody = create_melody(mario_1up_notes, mario_1up_note_lengths,
-						       mario_1up_length);
+			current_melody =
+			    create_melody(mario_1up_notes,
+					  mario_1up_note_lengths,
+					  mario_1up_length);
 			break;
 		case 0xDF:
-			current_melody = create_melody(laser_shot_notes, laser_shot_note_lengths,
-						       laser_shot_length);
+			current_melody =
+			    create_melody(laser_shot_notes,
+					  laser_shot_note_lengths,
+					  laser_shot_length);
 			break;
 		case 0xBF:
-			current_melody = create_melody(explosion_notes, explosion_note_lengths,
-						       explosion_length);
+			current_melody =
+			    create_melody(explosion_notes,
+					  explosion_note_lengths,
+					  explosion_length);
 			break;
 		default:
 			break;
 		}
 	}
-
 	// if there is no melody, play nothing
 	if (!current_melody.notes) {
 		return;
 	}
-
 	// count msec every 10th msec (1/100th of the sample rate), as
 	// it is more precise than every ms when the sample rate is
 	// 44100, which is standard
@@ -92,11 +101,17 @@ void tick()
 			// values that that 10 does not divide
 			if (current_melody.msec_left - 10 <= 0) {
 				// we need a new note, or nothing
-				if (current_melody.current_note_idx < current_melody.length) {
+				if (current_melody.current_note_idx <
+				    current_melody.length) {
 					++current_melody.current_note_idx;
-					uint16_t next_note_idx = ++current_melody.current_note_length_idx;
-					uint16_t next_note_length = current_melody.note_lengths[next_note_idx];
-					current_melody.msec_left = next_note_length;
+					uint16_t next_note_idx =
+					    ++current_melody.
+					    current_note_length_idx;
+					uint16_t next_note_length =
+					    current_melody.
+					    note_lengths[next_note_idx];
+					current_melody.msec_left =
+					    next_note_length;
 				} else {
 					// we are done with the song/melody
 					current_melody = empty_melody;
@@ -107,13 +122,13 @@ void tick()
 		}
 	}
 
-	uint16_t samples_per_period_treble = SAMPLE_RATE / current_melody.notes[current_melody.current_note_idx];
+	uint16_t samples_per_period_treble =
+	    SAMPLE_RATE / current_melody.notes[current_melody.current_note_idx];
 
 	// flip between low and high square every half period
 	if (!(tick_counter % (samples_per_period_treble / 2))) {
 		square_high_treble = !square_high_treble;
 	}
-
 	// create a square sound function
 	if (square_high_treble) {
 		*DAC0_CH0DATA = max_amplitude;
@@ -133,8 +148,10 @@ int main(void)
 	setup_NVIC();
 
 	// use windows xp startup as startup melody
-	current_melody = create_melody(windows_xp_startup_notes, windows_xp_startup_note_lengths,
-				       windows_xp_startup_length);
+	current_melody =
+	    create_melody(windows_xp_startup_notes,
+			  windows_xp_startup_note_lengths,
+			  windows_xp_startup_length);
 
 	while (true) {
 		tick();

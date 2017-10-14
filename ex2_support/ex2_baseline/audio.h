@@ -78,8 +78,7 @@
 #define B5  987
 
 // songs
-struct melody
-{
+struct melody {
 	// meta
 	uint16_t *notes;
 	int16_t *note_lengths;
@@ -92,7 +91,8 @@ struct melody
 };
 
 // simple way to instantiate struct melody
-struct melody create_melody(uint16_t *notes, int16_t *note_lengths, uint16_t length);
+struct melody create_melody(uint16_t * notes, int16_t * note_lengths,
+			    uint16_t length);
 
 // songs/melodies
 uint16_t lisa_notes[22];
