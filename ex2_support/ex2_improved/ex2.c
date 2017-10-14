@@ -14,12 +14,12 @@ void setupTimer(uint32_t period);
 void setupDAC();
 void setupNVIC();
 
+
+// how loud?
 uint16_t max_amplitude = 0xF;
 
 // non-global audio values
-uint16_t current_treble_note = 0;
 uint16_t current_bass_note = 0;
-int16_t msec_left = 0;
 _Bool square_high_treble = 0;
 _Bool square_high_bass = 0;
 uint16_t tick_counter = 0;
@@ -38,18 +38,18 @@ int main(void)
 	// enable interrupt handling
 	setupNVIC();
 
-	// initialize all music
+	// initialize all music at runtime, as you cannot do const
+	// initialization to bind the melodies to its struct before we
+	// are in an actual scope, (as we are indeed using structs)
 	setup_melodies();
 
 	// startup with windows_xp
 	set_current_melody(&sound_player, windows_xp_startup_melody);
 
-	/*
-	 * TODO for higher energy efficiency, sleep while waiting for
-	 * interrupts instead of infinite loop for busy-waiting
-	 */
+	*GPIO_PA_DOUT = 0x0000;
 	while (true) {
-		__asm__("wfi");
+		//__asm__("wfi");
+		;
 	}
 
 	return 0;

@@ -87,7 +87,8 @@ struct note
 struct melody
 {
 	// meta
-	struct note *notes;
+	struct note *treble_notes;
+	struct note *bass_notes;
 	uint16_t length;
 
 	// current playthrough
@@ -100,25 +101,28 @@ struct player
 	int16_t msec_left_current_note;
 };
 
-struct melody create_melody(struct note *notes, uint16_t length);
+struct melody create_melody(struct note *treble_notes, struct note *bass_notes, uint16_t length);
 void set_current_melody(struct player *sound_player, struct melody melody);
-
-void _play_sounds(uint16_t treble_note, uint16_t bass_note, uint16_t msec, _Bool legato);
-void play_sounds(uint16_t treble_note, uint16_t bass_note, uint16_t msec);
-void _play_sound(uint16_t note, uint16_t msec, _Bool legato);
-void play_sound(uint16_t note, uint16_t msec);
-
-// sounds
-void lisa_gikk_til_skolen();
-void mario_game_over();
-void mario_1up();
-void mario_power_up();
-void windows_xp_startup();
-void laser_shot();
-void explosion();
 
 void setup_melodies();
 
 // songs / melodies
-struct note windows_xp_startup_melody_notes[7];
+struct note windows_xp_startup_melody_treble_notes[7];
+struct note windows_xp_startup_melody_bass_notes[7];
 struct melody windows_xp_startup_melody;
+
+// what we used before is below, kept for the sake of the report
+
+/* void _play_sounds(uint16_t treble_note, uint16_t bass_note, uint16_t msec, _Bool legato); */
+/* void play_sounds(uint16_t treble_note, uint16_t bass_note, uint16_t msec); */
+/* void _play_sound(uint16_t note, uint16_t msec, _Bool legato); */
+/* void play_sound(uint16_t note, uint16_t msec); */
+
+// sounds
+/* void lisa_gikk_til_skolen(); */
+/* void mario_game_over(); */
+/* void mario_1up(); */
+/* void mario_power_up(); */
+/* void windows_xp_startup(); */
+/* void laser_shot(); */
+/* void explosion(); */

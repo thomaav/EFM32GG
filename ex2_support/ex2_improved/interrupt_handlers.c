@@ -3,6 +3,7 @@
 
 #include "audio.h"
 #include "button.h"
+#include "led.h"
 #include "efm32gg.h"
 
 void GPIO_IRQHandler()
@@ -48,50 +49,62 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	extern struct player sound_player;
 	extern struct melody empty_melody;
 
-	// globals needed
-	extern uint16_t tick_counter;
+	// fetch current melody of the player for readability
+	struct melody *current_melody = &(sound_player.current_melody);
+
+	// how loud are we?
 	extern uint16_t max_amplitude;
 
+	// flags for toggling high/low for square wave
 	extern _Bool square_high_treble;
 	extern _Bool square_high_bass;
 
-	// fetch current note
-	extern uint16_t current_bass_note;
-
+	// we tick regardless of whether music is actually played
+	extern uint16_t tick_counter;
 	++tick_counter;
 
-	// test that all is good by blinking the LEDs every second
+	// toggle led every second to see all is good for debugging
+	// purposes
 	if (tick_counter == SAMPLE_RATE) {
 		tick_counter = 0;
-		*GPIO_PA_DOUT ^= 0xFFFF;
+		toggle_led(ALL);
 	}
 
-	if (!sound_player.current_melody.notes) {
+	// if there are no treble notes to play, stop
+	if (!(sound_player.current_melody.treble_notes)) {
 		*TIMER1_IFC = 0x1;
 		return;
 	}
 
-	struct melody *current_melody = &(sound_player.current_melody);
+	// here we assume that treble and bass are the same lengths,
+	// with same length notes, which means pauses must be added if
+	// nothing is to be played in one of them
+	// TODO: separate counters for each?
+
+	// we count msec every 10th msec (1/100th of the sample rate),
+	// as it is more precise than every ms wen the sample rate is
+	// 44100, which we are most likely using
 	if (!(tick_counter % (SAMPLE_RATE / 100))) {
-		if (sound_player.msec_left_current_note > 0) {
-			if (sound_player.msec_left_current_note - 10 <= 0) {
-				if (current_melody->current_note < current_melody->length) {
-					++current_melody->current_note;
-					uint16_t next_note_idx = current_melody->current_note;
-					uint16_t next_note_length = current_melody->notes[next_note_idx].length;
-					sound_player.msec_left_current_note = next_note_length;
-				} else {
-					set_current_melody(&sound_player, empty_melody);
-				}
+		if (sound_player.msec_left_current_note - 10 <= 0) {
+			// here we need to check whether the note we
+			// just played was the last note of the melody
+			++(current_melody->current_note);
+			if (current_melody->current_note < current_melody->length) {
+				uint16_t next_note_idx = current_melody->current_note;
+				uint16_t next_note_length = current_melody->treble_notes[next_note_idx].length;
+				sound_player.msec_left_current_note = next_note_length;
 			} else {
-				sound_player.msec_left_current_note -= 10;
+				set_current_melody(&sound_player, empty_melody);
 			}
+		} else {
+			sound_player.msec_left_current_note -= 10;
 		}
 	}
 
-	uint16_t next_treble_note_frequency = current_melody->notes[current_melody->current_note].frequency;
+	uint16_t next_treble_note_frequency = current_melody->treble_notes[current_melody->current_note].frequency;
+	uint16_t next_bass_note_frequency = current_melody->bass_notes[current_melody->current_note].frequency;
 	uint16_t samples_per_period_treble = SAMPLE_RATE / next_treble_note_frequency;
-	uint16_t samples_per_period_bass = SAMPLE_RATE / current_bass_note;
+	uint16_t samples_per_period_bass = SAMPLE_RATE / next_bass_note_frequency;
 
 	if (!(tick_counter % (samples_per_period_treble / 2))) {
 		square_high_treble = !square_high_treble;
@@ -101,18 +114,8 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 		square_high_bass = !square_high_bass;
 	}
 
-	// create a square sound function
-	if (square_high_treble) {
-		*DAC0_CH0DATA = max_amplitude;
-	} else {
-		*DAC0_CH0DATA = 0x000;
-	}
-
-	if (square_high_bass) {
-		*DAC0_CH1DATA = max_amplitude;
-	} else {
-		*DAC0_CH1DATA = 0x000;
-	}
+	*DAC0_CH0DATA = square_high_treble ? max_amplitude : 0x000;
+	*DAC0_CH1DATA = square_high_bass ? max_amplitude : 0x000;
 
 	// clear interrupt flag
 	*TIMER1_IFC = 0x1;
