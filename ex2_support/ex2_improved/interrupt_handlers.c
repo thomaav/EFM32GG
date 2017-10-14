@@ -45,6 +45,9 @@ void GPIO_IRQHandler()
  */
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 {
+	// clear the interrupt
+	*TIMER1_IFC = 0x1;
+
 	// sound player needed
 	extern struct player sound_player;
 	extern struct melody empty_melody;
@@ -72,7 +75,6 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 
 	// if there are no treble notes to play, stop
 	if (!(sound_player.current_melody.treble_notes)) {
-		*TIMER1_IFC = 0x1;
 		return;
 	}
 
@@ -116,9 +118,6 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 
 	*DAC0_CH0DATA = square_high_treble ? max_amplitude : 0x000;
 	*DAC0_CH1DATA = square_high_bass ? max_amplitude : 0x000;
-
-	// clear interrupt flag
-	*TIMER1_IFC = 0x1;
 }
 
 /*

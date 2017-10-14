@@ -46,10 +46,8 @@ int main(void)
 	// startup with windows_xp
 	set_current_melody(&sound_player, windows_xp_startup_melody);
 
-	*GPIO_PA_DOUT = 0x0000;
 	while (true) {
-		//__asm__("wfi");
-		;
+		__asm__("wfi");
 	}
 
 	return 0;
