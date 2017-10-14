@@ -6,37 +6,35 @@
 
 #define   SAMPLE_PERIOD   0
 
-/*
- * Declaration of peripheral setup functions 
- */
-void setupGPIO();
-void setupTimer(uint32_t period);
-void setupDAC();
-void setupNVIC();
+// prototypes of peripheral setup functions must be known, as they
+// have no header files for only one function
+void setup_GPIO();
+void setup_Timer(uint32_t period);
+void setup_DAC();
+void setup_NVIC();
 
-
-// how loud?
+// how loud? remember that max is 12-bit (it is unlikely that we will
+// ever use such a high value)
 uint16_t max_amplitude = 0xF;
 
-// non-global audio values
-uint16_t current_bass_note = 0;
+// non-global audio values to toggle high/low of square wave
 _Bool square_high_treble = 0;
 _Bool square_high_bass = 0;
 uint16_t tick_counter = 0;
 
-// initialize a sound player, and an empty one for no sound
+// initialize a sound player, and an empty melody for sound pauses
 struct player sound_player;
 struct melody empty_melody;
 
 int main(void)
 {
 	// setup all peripherals
-	setupGPIO();
-	setupDAC();
-	setupTimer(SAMPLE_PERIOD);
+	setup_GPIO();
+	setup_DAC();
+	setup_Timer(SAMPLE_PERIOD);
 
 	// enable interrupt handling
-	setupNVIC();
+	setup_NVIC();
 
 	// initialize all music at runtime, as you cannot do const
 	// initialization to bind the melodies to its struct before we
@@ -53,7 +51,7 @@ int main(void)
 	return 0;
 }
 
-void setupNVIC()
+void setup_NVIC()
 {
 	// to enable GPIO-interrupts, write bits 1 and 11
 	*ISER0 |= 0x802;
@@ -78,5 +76,5 @@ void setupNVIC()
  * LEUART0_IRQHandler LEUART1_IRQHandler LETIMER0_IRQHandler
  * PCNT0_IRQHandler PCNT1_IRQHandler PCNT2_IRQHandler RTC_IRQHandler
  * BURTC_IRQHandler CMU_IRQHandler VCMP_IRQHandler LCD_IRQHandler
- * MSC_IRQHandler AES_IRQHandler EBI_IRQHandler EMU_IRQHandler 
+ * MSC_IRQHandler AES_IRQHandler EBI_IRQHandler EMU_IRQHandler
  */

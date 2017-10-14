@@ -3,7 +3,7 @@
 
 #include "efm32gg.h"
 
-void setupDAC()
+void setup_DAC()
 {
 	// general setup for DAC
 	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_DAC0; // (1 << 17) to enable clock
