@@ -85,7 +85,7 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	// TODO: separate counters for each?
 
 	// we count msec every 10th msec (1/100th of the sample rate),
-	// as it is more precise than every ms wen the sample rate is
+	// as it is more precise than every ms when the sample rate is
 	// 44100, which we are most likely using
 	if (!(tick_counter % (SAMPLE_RATE / 100))) {
 		if (sound_player.msec_left_current_note - 10 <= 0) {

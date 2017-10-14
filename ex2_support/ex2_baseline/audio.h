@@ -6,8 +6,8 @@
 #define WHOLE (HALF * 2)
 #define HALF (FOURTH * 2)
 #define FOURTH (1000 / BPS)
-#define EIGTH (FOURTH / 2)
-#define SIXTEENTH (EIGTH / 2)
+#define EIGHTH (FOURTH / 2)
+#define SIXTEENTH (EIGHTH / 2)
 #define THIRTYSECOND (SIXTEENTH / 2)
 #define TRIPLET 3
 #define PAUSE 0

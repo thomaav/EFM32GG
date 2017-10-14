@@ -7,29 +7,29 @@
 // these are constant, use them in the global scope, and initialize
 // melodies in setup_melodies
 struct note windows_xp_startup_melody_treble_notes[7] = {
-	{ .frequency = Eb5, .length = EIGTH },
+	{ .frequency = Eb5, .length = EIGHTH },
 	{ .frequency = Eb4, .length = SIXTEENTH },
 	{ .frequency = Bb4, .length = SIXTEENTH },
 	{ .frequency = PAUSE, .length = SIXTEENTH },
-	{ .frequency = Ab4, .length = EIGTH + SIXTEENTH },
-	{ .frequency = Eb5, .length = EIGTH },
-	{ .frequency = Bb4, .length = FOURTH + EIGTH }
+	{ .frequency = Ab4, .length = EIGHTH + SIXTEENTH },
+	{ .frequency = Eb5, .length = EIGHTH },
+	{ .frequency = Bb4, .length = FOURTH + EIGHTH }
 };
 
 struct note windows_xp_startup_melody_bass_notes[7] = {
-	{ .frequency = Eb4, .length = EIGTH },
+	{ .frequency = Eb4, .length = EIGHTH },
 	{ .frequency = Eb3, .length = SIXTEENTH },
 	{ .frequency = Bb3, .length = SIXTEENTH },
 	{ .frequency = PAUSE, .length = SIXTEENTH },
-	{ .frequency = Ab3, .length = EIGTH + SIXTEENTH },
-	{ .frequency = Eb4, .length = EIGTH },
-	{ .frequency = Bb3, .length = FOURTH + EIGTH }
+	{ .frequency = Ab3, .length = EIGHTH + SIXTEENTH },
+	{ .frequency = Eb4, .length = EIGHTH },
+	{ .frequency = Bb3, .length = FOURTH + EIGHTH }
 };
 
 struct note mario_game_over_melody_treble_notes[15] = {
 	{ .frequency = C4, .length = FOURTH },
-	{ .frequency = PAUSE, .length = EIGTH },
-	{ .frequency = G3, .length = EIGTH },
+	{ .frequency = PAUSE, .length = EIGHTH },
+	{ .frequency = G3, .length = EIGHTH },
 	{ .frequency = PAUSE, .length = FOURTH },
 	{ .frequency = E3, .length = FOURTH },
 
@@ -42,14 +42,14 @@ struct note mario_game_over_melody_treble_notes[15] = {
 
 	{ .frequency = G3, .length = SIXTEENTH },
 	{ .frequency = D3, .length = SIXTEENTH },
-	{ .frequency = E3, .length = EIGTH },
+	{ .frequency = E3, .length = EIGHTH },
 	{ .frequency = E3, .length = HALF }
 };
 
 struct note mario_game_over_melody_bass_notes[15] = {
 	{ .frequency = E3, .length = FOURTH },
-	{ .frequency = PAUSE, .length = EIGTH },
-	{ .frequency = C3, .length = EIGTH },
+	{ .frequency = PAUSE, .length = EIGHTH },
+	{ .frequency = C3, .length = EIGHTH },
 	{ .frequency = PAUSE, .length = FOURTH },
 	{ .frequency = PAUSE, .length = FOURTH },
 
@@ -62,7 +62,7 @@ struct note mario_game_over_melody_bass_notes[15] = {
 
 	{ .frequency = C2, .length = SIXTEENTH },
 	{ .frequency = C2, .length = SIXTEENTH },
-	{ .frequency = C2, .length = EIGTH },
+	{ .frequency = C2, .length = EIGHTH },
 	{ .frequency = C2, .length = HALF }
 };
 

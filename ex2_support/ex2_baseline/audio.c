@@ -46,8 +46,8 @@ uint16_t windows_xp_startup_notes[7] = {
 	Eb5, Eb4, Bb4, PAUSE, Ab4, Eb5, Bb4
 };
 int16_t windows_xp_startup_note_lengths[7] = {
-	EIGTH, SIXTEENTH, SIXTEENTH, SIXTEENTH,
-	EIGTH + SIXTEENTH, EIGTH, FOURTH + EIGTH
+	EIGHTH, SIXTEENTH, SIXTEENTH, SIXTEENTH,
+	EIGHTH + SIXTEENTH, EIGHTH, FOURTH + EIGHTH
 };
 uint16_t windows_xp_startup_length = 7;
 
@@ -58,10 +58,10 @@ uint16_t mario_game_over_notes[15] = {
 	G3, D3, E3, E3
 };
 int16_t mario_game_over_note_lengths[15] = {
-	FOURTH, EIGTH, EIGTH, FOURTH, FOURTH,
+	FOURTH, EIGHTH, EIGHTH, FOURTH, FOURTH,
 	HALF / TRIPLET, HALF / TRIPLET, HALF / TRIPLET,
 	HALF / TRIPLET, HALF / TRIPLET, HALF / TRIPLET,
-	SIXTEENTH, SIXTEENTH, EIGTH, HALF
+	SIXTEENTH, SIXTEENTH, EIGHTH, HALF
 };
 uint16_t mario_game_over_length = 15;
 

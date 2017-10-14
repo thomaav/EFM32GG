@@ -108,8 +108,8 @@
 /* void mario_game_over() */
 /* { */
 /* 	play_sounds(C4, E3, FOURTH); */
-/* 	play_sounds(PAUSE, PAUSE, EIGTH); */
-/* 	play_sounds(G3, C3, EIGTH); */
+/* 	play_sounds(PAUSE, PAUSE, EIGHTH); */
+/* 	play_sounds(G3, C3, EIGHTH); */
 /* 	play_sounds(PAUSE, PAUSE, FOURTH); */
 /* 	play_sounds(E3, PAUSE, FOURTH); */
 
@@ -122,7 +122,7 @@
 
 /* 	play_sounds(G3, C2, SIXTEENTH); */
 /* 	_play_sounds(D3, C2, SIXTEENTH, true); */
-/* 	_play_sounds(E3, C2, EIGTH, true); */
+/* 	_play_sounds(E3, C2, EIGHTH, true); */
 /* 	_play_sounds(E3, C2, HALF, true); */
 /* } */
 
@@ -159,13 +159,13 @@
 
 /* void windows_xp_startup() */
 /* { */
-/* 	play_sounds(Eb5, Eb4, EIGTH); */
+/* 	play_sounds(Eb5, Eb4, EIGHTH); */
 /* 	play_sounds(Eb4, Eb3, SIXTEENTH); */
 /* 	play_sounds(Bb4, Bb3, SIXTEENTH); */
 /* 	play_sounds(PAUSE, PAUSE, SIXTEENTH); */
-/* 	play_sounds(Ab4, Ab3, EIGTH + SIXTEENTH); */
-/* 	play_sounds(Eb5, Eb4, EIGTH); */
-/* 	play_sounds(Bb4, Bb3, FOURTH + EIGTH); */
+/* 	play_sounds(Ab4, Ab3, EIGHTH + SIXTEENTH); */
+/* 	play_sounds(Eb5, Eb4, EIGHTH); */
+/* 	play_sounds(Bb4, Bb3, FOURTH + EIGHTH); */
 /* } */
 
 /* void laser_shot() */
