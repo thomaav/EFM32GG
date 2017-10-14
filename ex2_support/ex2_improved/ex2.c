@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <stdlib.h>
-
 #include "audio.h"
 #include "efm32gg.h"
 #include "melody.h"
