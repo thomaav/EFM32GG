@@ -6,3 +6,5 @@
 #define SW6 0xDF
 #define SW7 0xBF
 #define SW8 0x7F
+
+uint32_t get_buttons_pressed();

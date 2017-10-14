@@ -10,20 +10,29 @@ void GPIO_IRQHandler()
 	// we need the player to possible change the current melody
 	extern struct player sound_player;
 
-	uint32_t buttons_pressed = *GPIO_PC_DIN;
+	// fetch which buttons are pressed at interrupt-time
+	uint32_t buttons_pressed = get_buttons_pressed();
 
-	if (buttons_pressed == SW1) {
+	switch (buttons_pressed) {
+	case SW1:
 		set_current_melody(&sound_player, windows_xp_startup_melody);
-	} else if (buttons_pressed == SW2) {
-		;
-	} else if (buttons_pressed == SW3) {
-		;
-	} else if (buttons_pressed == SW4) {
-		;
-	} else if (buttons_pressed == SW5) {
-		;
-	} else if (buttons_pressed == SW6) {
-		;
+		break;
+	case SW2:
+		break;
+	case SW3:
+		break;
+	case SW4:
+		break;
+	case SW5:
+		break;
+	case SW6:
+		break;
+	case SW7:
+		break;
+	case SW8:
+		break;
+	default:
+		break;
 	}
 
 	// clear interrupt
