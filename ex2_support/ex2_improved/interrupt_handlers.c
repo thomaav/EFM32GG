@@ -3,6 +3,7 @@
 
 #include "audio.h"
 #include "button.h"
+#include "melody.h"
 #include "led.h"
 #include "efm32gg.h"
 

@@ -3,7 +3,7 @@
 # Exercise 2, TDT4258
 
 # differences from original:
-# added: link with audio.o, button.o, led.o
+# added: link with audio.o, button.o, led.o, melody.h
 
 CC=arm-none-eabi-gcc
 LD=arm-none-eabi-gcc
@@ -17,7 +17,7 @@ LINKERSCRIPT=lib/efm32gg.ld
 ex2.bin : ex2.elf
 	${OBJCOPY} -O binary $< $@
 
-ex2.elf : ex2.o timer.o dac.o gpio.o interrupt_handlers.o audio.o button.o led.o
+ex2.elf : ex2.o timer.o dac.o gpio.o interrupt_handlers.o audio.o button.o led.o melody.o
 	${LD} -T ${LINKERSCRIPT} $^ -o $@ ${LDFLAGS} 
 
 %.o : %.c

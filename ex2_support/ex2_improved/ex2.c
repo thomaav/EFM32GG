@@ -3,8 +3,9 @@
 
 #include <stdlib.h>
 
-#include "efm32gg.h"
 #include "audio.h"
+#include "efm32gg.h"
+#include "melody.h"
 
 // prototypes of peripheral setup functions must be known, as they
 // have no header files for only one function
