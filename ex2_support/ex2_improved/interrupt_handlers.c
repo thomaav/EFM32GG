@@ -7,9 +7,28 @@
 #include "led.h"
 #include "melody.h"
 
+_Bool interrupt_gpio_skip = true;
+
+// fetch functions that have no header files
+void disable_timer();
+void enable_timer();
+
+void enable_DAC();
+void disable_DAC();
+
+extern struct melody empty_melody;
+
 // we don't care whether the interrupt is odd or even, just call this
 void GPIO_IRQHandler()
 {
+	// clear interrupt
+	*GPIO_IFC = *GPIO_IF;
+
+	if (interrupt_gpio_skip) {
+		interrupt_gpio_skip = false;
+		return;
+	}
+
 	// we need the player to possible change the current melody
 	extern struct player sound_player;
 
@@ -36,15 +55,19 @@ void GPIO_IRQHandler()
 		set_current_melody(&sound_player, explosion_melody);
 		break;
 	case SW7:
-		break;
+		turn_off_music_peripherals();
+		set_current_melody(&sound_player, empty_melody);
+		return;
 	case SW8:
-		break;
+		turn_off_music_peripherals();
+		set_current_melody(&sound_player, empty_melody);
+		return;
 	default:
 		break;
 	}
 
-	// clear interrupt
-	*GPIO_IFC = *GPIO_IF;
+	// enable timer, since we are playing music again
+	turn_on_music_peripherals();
 }
 
 void __attribute__ ((interrupt)) TIMER1_IRQHandler()
@@ -67,12 +90,6 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 	extern uint16_t tick_counter;
 	++tick_counter;
 
-	// toggle led every second to see all is good for debugging
-	// purposes
-	if (tick_counter == SAMPLE_RATE) {
-		tick_counter = 0;
-		toggle_led(ALL);
-	}
 	// if there are no treble notes to play, stop
 	if (!(sound_player.current_melody.treble_notes)) {
 		return;
@@ -105,6 +122,7 @@ void __attribute__ ((interrupt)) TIMER1_IRQHandler()
 				    next_note_length;
 			} else {
 				set_current_melody(&sound_player, empty_melody);
+				turn_off_music_peripherals();
 			}
 		} else {
 			sound_player.msec_left_current_note -= 10;

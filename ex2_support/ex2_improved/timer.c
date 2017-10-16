@@ -19,3 +19,13 @@ void setup_Timer()
 	*TIMER1_IEN = 0x1;	// enable interrupt generation
 	*TIMER1_CMD = 0x1;	// start timer
 }
+
+void disable_timer()
+{
+	*CMU_HFPERCLKEN0 &= ~(CMU2_HFPERCLKEN0_TIMER1);
+}
+
+void enable_timer()
+{
+	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_TIMER1;
+}

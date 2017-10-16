@@ -8,10 +8,10 @@ void setup_GPIO()
 {
 	// general setup for GPIO
 	*CMU_HFPERCLKEN0 |= CMU2_HFPERCLKEN0_GPIO;	// (1 << 13) to enable clock
-	*GPIO_PA_CTRL = 0x1;	// high drive strenght for LEDs
+	/* *GPIO_PA_CTRL = 0x1;	// high drive strenght for LEDs */
 
 	// set LEDs (A8-A15) to output mode
-	*GPIO_PA_MODEH = 0x55555555;
+	/* *GPIO_PA_MODEH = 0x55555555; */
 
 	// set buttons (C1-C7) to input mode and enable internal pull-up
 	*GPIO_PC_MODEL = 0x33333333;

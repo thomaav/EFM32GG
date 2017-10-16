@@ -15,3 +15,15 @@ void setup_DAC()
 	// if wanted, push initial sample to DAC0_CH{0,1}DATA
 	;
 }
+
+void enable_DAC()
+{
+	*DAC0_CH0CTRL = 1;
+	*DAC0_CH1CTRL = 1;
+}
+
+void disable_DAC()
+{
+	*DAC0_CH0CTRL = 0;
+	*DAC0_CH1CTRL = 0;
+}

@@ -1,3 +1,5 @@
+#include "efm32gg.h"
+
 // we set BPM statically, as using a dynamic BPM for each melody we
 // create would require more work to keep the precision of our
 // counting acceptable
@@ -117,3 +119,6 @@ void set_current_melody(struct player *sound_player, struct melody melody);
 // setup melodies is needed to actually bind our melodies correctly at
 // runtime, as structs cannot be usted for const initiation in C
 void setup_melodies();
+
+void turn_off_music_peripherals();
+void turn_on_music_peripherals();

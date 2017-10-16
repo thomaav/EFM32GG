@@ -50,3 +50,23 @@ void setup_melodies()
 	    create_melody(explosion_melody_treble_notes,
 			  explosion_melody_bass_notes, 18);
 }
+
+// needed to sleep CPU when no music is played
+void disable_timer();
+void enable_timer();
+void enable_DAC();
+void disable_DAC();
+
+void turn_off_music_peripherals()
+{
+	*SCR = 0x6;
+	disable_timer();
+	disable_DAC();
+}
+
+void turn_on_music_peripherals()
+{
+	*SCR = 0x2;
+	enable_timer();
+	enable_DAC();
+}
