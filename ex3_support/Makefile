@@ -9,16 +9,21 @@
 CFLAGS += -O2 -g -Wall #-Wsign-compare -Wfloat-equal -Wformat-security #-Werror
 CPPFLAGS +=
 LDFLAGS +=
+OBJS = framebuffer.o
 
 
-all: game
+%.o: %.c
+	${CC} ${CFLAGS} $< -c -o $@
+
+game: game.c ${OBJS}
+	${CC} ${CFLAGS} $^ -o $@
 
 clean:
-	-rm -f game
+	-rm -f game *.o
 
 install:
 
 
-.PHONY: all install clean
+.PHONY: install clean
 
 # end of development makefile
