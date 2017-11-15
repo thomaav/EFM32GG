@@ -29,16 +29,27 @@
 #define PLAYER_INIT_X 3
 #define PLAYER_INIT_Y 0
 
-#define BLACK (0x0000)
-#define WHITE (0xFFFF)
-#define RED   (0xF000)
-#define GREEN (0x0FF0)
-#define BLUE  (0x000F)
+#define BLACK   (0x0000)
+#define WHITE   (0xFFFF)
+
+#define RED     (0xF000)
+#define GREEN   (0x0FF0)
+#define BLUE    (0x000F)
+
+// shape colors
+static uint16_t color_I;
+static uint16_t color_J;
+static uint16_t color_L;
+static uint16_t color_O;
+static uint16_t color_S;
+static uint16_t color_T;
+static uint16_t color_Z;
 
 struct player {
 	uint16_t x;
 	uint16_t y;
 	uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH];
+	uint16_t color;
 };
 
 // almost the same as a player, except that it just points to the
@@ -51,7 +62,7 @@ struct shape_projection {
 
 static uint8_t gp_state;
 static int gpfd;
-static uint8_t board[GAME_HEIGHT][GAME_WIDTH] = {{ 0 }};
+static uint16_t board[GAME_HEIGHT][GAME_WIDTH] = {{ 0 }};
 static struct shape_projection projection;
 static struct player player;
 static uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
@@ -93,22 +104,24 @@ static uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
 
 // prototypes for now
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
-bool illegal_shape_position(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
+bool illegal_shape_position(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			    uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			    int16_t x, int16_t y);
 void rotate_shape(uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
 void paint_tetris_tile(uint16_t color, int16_t x, int16_t y);
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 			uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
-void blit_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH]);
+void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH]);
 void shift_occupied_above_row(int row);
-void transfer_shape_to_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
+void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			     uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			     int16_t x, int16_t y);
+uint16_t get_shape_color(int shape_index);
 void new_player_shape();
 void restart_tetris();
 bool tick_tetris();
 void update_projection(struct shape_projection *projection);
+uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b);
 void gp_handler(int sig);
 void register_SIGIO(int fd);
 
@@ -120,7 +133,7 @@ void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[S
 	}
 }
 
-bool illegal_shape_position(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
+bool illegal_shape_position(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			    uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			    int16_t x, int16_t y)
 {
@@ -216,7 +229,7 @@ void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 		      SHAPE_WIDTH * TILE_SIZE, SHAPE_HEIGHT * TILE_SIZE);
 }
 
-void blit_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH])
+void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH])
 {
 	int i, j;
 
@@ -226,7 +239,7 @@ void blit_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH])
 	for (i = 0; i < GAME_HEIGHT; ++i) {
 		for (j = 0; j < GAME_WIDTH; ++j) {
 			if (board[i][j]) {
-				paint_tetris_tile(RED, j, i);
+				paint_tetris_tile(board[i][j], j, i);
 			}
 		}
 	}
@@ -262,7 +275,7 @@ void shift_occupied_above_row(int row)
 	}
 }
 
-void transfer_shape_to_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
+void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			     uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			     int16_t x, int16_t y)
 {
@@ -271,7 +284,7 @@ void transfer_shape_to_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
 	for (i = 0; i < SHAPE_HEIGHT; ++i) {
 		for (j = 0; j < SHAPE_WIDTH; ++j) {
 			if (shape[i][j]) {
-				board[y + i][x + j] = 1;
+				board[y + i][x + j] = player.color;
 			}
 		}
 	}
@@ -298,12 +311,45 @@ void transfer_shape_to_board(uint8_t board[GAME_HEIGHT][GAME_WIDTH],
 	update_screen(board);
 }
 
+uint16_t get_shape_color(int shape_index)
+{
+	// one color for each shape
+	switch (shape_index) {
+	case 0:
+		return color_I;
+		break;
+	case 1:
+		return color_J;
+		break;
+	case 2:
+		return color_L;
+		break;
+	case 3:
+		return color_O;
+		break;
+	case 4:
+		return color_S;
+		break;
+	case 5:
+		return color_T;
+		break;
+	case 6:
+		return color_Z;
+		break;
+	default:
+		break;
+	}
+
+	return color_I;
+}
+
 void new_player_shape()
 {
 	player.x = PLAYER_INIT_X;
 	player.y = PLAYER_INIT_Y;
 	int random_shape = rand() % UNIQ_SHAPES;
 	memcpy_tetris_shape(player.shape, shapes[random_shape]);
+	player.color = get_shape_color(random_shape);
 
 	// even though restart_tetris might call new_player_shape again,
 	// after we have reset, it is not possible for the new shape
@@ -358,6 +404,11 @@ void update_projection(struct shape_projection *projection)
 	}
 }
 
+uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b)
+{
+	return (uint16_t) ((r << 11) | (g << 5) | b);
+}
+
 void gp_handler(int sig)
 {
 	if (read(gpfd, &gp_state, GPBUF_SIZE) < 0) {
@@ -407,7 +458,7 @@ void gp_handler(int sig)
 
 	// redraw ourselves after interrupt has handled action
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-	blit_tetris_shape(GREEN, player.x, player.y, player.shape);
+	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
 void register_SIGIO(int fd)
@@ -427,7 +478,6 @@ void register_SIGIO(int fd)
 
 void __nanosleep(const struct timespec *req, struct timespec *rem)
 {
-	/* struct timespec _rem; */
 	struct timespec _rem;
 	if (nanosleep(req, rem) == -1 && errno == EINTR)
 		__nanosleep(req, &_rem);
@@ -464,6 +514,15 @@ int main(int argc, char *argv[])
 	// register async notification on SIGIO with /dev/gamepad
 	register_SIGIO(gpfd);
 
+	// read in colors
+	color_I = rgb888_to_rgb565(0, 255, 255);
+	color_J = rgb888_to_rgb565(0, 0, 255);
+	color_L = rgb888_to_rgb565(255, 172, 0);
+	color_O = rgb888_to_rgb565(255, 255, 0);
+	color_S = rgb888_to_rgb565(0, 255, 0);
+	color_T = rgb888_to_rgb565(154, 0, 255);
+	color_Z = rgb888_to_rgb565(255, 0, 0);
+
 	// setup done, let's start playing
 	new_player_shape();
 
@@ -473,7 +532,7 @@ int main(int argc, char *argv[])
 	// initial paint after setting up values like border
 	blit_board(board);
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-	blit_tetris_shape(GREEN, player.x, player.y, player.shape);
+	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 
 	// timespecs used for custom nanosleep that keeps sleeping
 	// after signal
@@ -489,7 +548,7 @@ int main(int argc, char *argv[])
 		tick_tetris();
 
 		blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-		blit_tetris_shape(GREEN, player.x, player.y, player.shape);
+		blit_tetris_shape(player.color, player.x, player.y, player.shape);
 
 		blit_board(board);
 
