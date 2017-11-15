@@ -20,5 +20,7 @@ int setup_screen();
 int teardown_screen();
 
 void update_screen();
+void update_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 void clear_screen();
-void paint_screen(uint16_t *color);
+void paint_screen(uint16_t color);
+void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height);

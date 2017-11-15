@@ -1,4 +1,3 @@
-#include <asm/io.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -9,6 +8,10 @@
 #include <linux/device.h>
 #include <linux/uaccess.h>
 #include <linux/interrupt.h>
+
+#include <asm/io.h>
+#include <asm/signal.h>
+#include <asm/siginfo.h>
 
 // we are only concerned with button related input
 #define GPIO_PC_BASE     (0x40006048)
@@ -44,11 +47,13 @@ struct gp_chrdev {
 	dev_t devno;
 	struct cdev cdev;
 	struct class *cl;
+	struct fasync_struct *asqueue;
 	u32 *gpio_pc_mem;
 	u32 *gpio_irq_mem;
 };
 
 static struct gp_chrdev gp_dev;
+u8 first_interrupt;
 
 static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
@@ -58,8 +63,6 @@ static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, l
 
 	GPIO_DIN_state = ioread32(gp_dev.gpio_pc_mem + GPIO_DIN);
 	gp_state = ~(GPIO_DIN_state & 0xFF);
-
-	printk(KERN_WARNING "[gamepad]: state: %x\n", gp_state);
 
 	// we only read 1 byte in the gamepad driver, no matter if we
 	// are passed a longer count, seeing as doing a read and copy
@@ -73,6 +76,11 @@ static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, l
 	return (count == bytes_to_copy ? bytes_to_copy : 0);
 }
 
+static int gamepad_fasync(int fd, struct file *filp, int mode)
+{
+	return fasync_helper(fd, filp, mode, &gp_dev.asqueue);
+}
+
 static int gamepad_open(struct inode *inode, struct file *filp)
 {
 	return 0;
@@ -80,6 +88,7 @@ static int gamepad_open(struct inode *inode, struct file *filp)
 
 static int gamepad_release(struct inode *inode, struct file *filp)
 {
+	gamepad_fasync(-1, filp, 0);
 	return 0;
 }
 
@@ -88,15 +97,25 @@ static int gamepad_release(struct inode *inode, struct file *filp)
 static struct file_operations gp_fops = {
 	.owner = THIS_MODULE,
 	.read = gamepad_read,
+	.fasync = gamepad_fasync,
 	.open = gamepad_open,
 	.release = gamepad_release
 };
 
 static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 {
-	u32 GPIO_IF_state = ioread32(gp_dev.gpio_irq_mem + GPIO_IF);
+	u32 GPIO_IF_state;
+
+	// if we push this first interrupt to the asqueue, we will be
+	// one msg behind at all times, making it seem like we lag
+	if (first_interrupt) {
+		first_interrupt = 0;
+		return IRQ_HANDLED;
+	}
+
+	GPIO_IF_state = ioread32(gp_dev.gpio_irq_mem + GPIO_IF);
 	iowrite32(GPIO_IF_state, gp_dev.gpio_irq_mem + GPIO_IFC);
-	printk(KERN_INFO "[gamepad]: Received GPIO interrupt.\n");
+	kill_fasync(&gp_dev.asqueue, SIGIO, POLL_IN);
 	return IRQ_HANDLED;
 }
 
@@ -106,6 +125,10 @@ static int __init gamepad_init(void)
 	struct resource *gpio_pc_mem;
 	struct resource *gpio_irq_mem;
 	struct device *chrdev;
+
+	// we do not want to catch the first interrupt, as it is a
+	// false positive
+	first_interrupt = 1;
 
 	// initialize our device. we could also use memset with 0 and
 	// length sizeof(struct gp_chrdev) to empty the initial struct
@@ -183,14 +206,12 @@ static int __init gamepad_init(void)
 		goto fail_device_create;
 	}
 
-	// do not return if interrupts can not be registered, as they
+	// do not return if interrupts cannot be registered, as they
 	// are not specifically required to make the driver work
-	if (request_irq(17, &gpio_irq_handler, 0, "gamepad", &gp_dev)) {
+	if (request_irq(17, &gpio_irq_handler, 0, "gamepad", &gp_dev))
 		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Even.\n ");
-	}
-	if (request_irq(18, &gpio_irq_handler, 0, "gamepad", &gp_dev)) {
+	if (request_irq(18, &gpio_irq_handler, 0, "gamepad", &gp_dev))
 		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Odd.\n ");
-	}
 
 	// now enable interrupt generation, as we have a functioning
 	// char device
@@ -213,7 +234,10 @@ static int __init gamepad_init(void)
 
 static void __exit gamepad_cleanup(void)
 {
-	// deallocate in the opposite direction of allocation
+	// we did not necessarily actually get irq17, irq18, but any
+	// further errors trying to free them will not matter
+	free_irq(17, &gp_dev);
+	free_irq(18, &gp_dev);
 	device_destroy(gp_dev.cl, gp_dev.devno);
 	class_destroy(gp_dev.cl);
 	cdev_del(&gp_dev.cdev);

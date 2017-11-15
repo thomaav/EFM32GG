@@ -13,18 +13,16 @@ int mmap_fb(uint16_t **map, int fbfd)
 {
 	*map = mmap(0, FBSIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
 
-	if (*map == MAP_FAILED) {
+	if (*map == MAP_FAILED)
 		return -1;
-	}
 
 	return 0;
 }
 
 int unmap_fb(uint16_t **map)
 {
-	if (munmap(*map, FBSIZE) == -1) {
+	if (munmap(*map, FBSIZE) == -1)
 		return -1;
-	}
 
 	return 0;
 }
@@ -32,7 +30,7 @@ int unmap_fb(uint16_t **map)
 int setup_screen()
 {
 	fbfd = open("/dev/fb0", O_RDWR);
-	if(fbfd == -1) {
+	if (fbfd == -1) {
 		printf("open() failed with error [%s].\n", strerror(errno));
 		return -1;
 	}
@@ -76,6 +74,21 @@ int teardown_screen()
 
 void update_screen()
 {
+	rect.dx = 0;
+	rect.dy = 0;
+	rect.width = WIDTH;
+	rect.height = HEIGHT;
+
+	ioctl(fbfd, 0x4680, &rect);
+}
+
+void update_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+	rect.dx = x;
+	rect.dy = y;
+	rect.width = width;
+	rect.height = height;
+
 	ioctl(fbfd, 0x4680, &rect);
 }
 
@@ -84,13 +97,31 @@ void clear_screen()
 	memset(fb_map, 0x0, FBSIZE);
 }
 
-void paint_screen(uint16_t *color)
+void paint_screen(uint16_t color)
 {
 	int x, y;
 
 	for (x = 0; x < WIDTH; ++x) {
 		for (y = 0; y < HEIGHT; ++y) {
-			fb_map[WIDTH * y + x] = *color;
+			fb_map[WIDTH * y + x] = color;
+		}
+	}
+
+	update_screen();
+}
+
+void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+	uint16_t i, j;
+
+	if (x + width > WIDTH || y + height > HEIGHT) {
+		printf("Could not paint region x: %d, y: %d.\n", x, y);
+		return;
+	}
+
+	for (i = x; i < x + width; ++i) {
+		for (j = y; j < y + height; ++j) {
+			fb_map[WIDTH * j + i] = color;
 		}
 	}
 }
