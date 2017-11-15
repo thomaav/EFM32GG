@@ -36,12 +36,9 @@ int setup_screen()
 	}
 
 	// actually map /dev/fb0 to some memory
-	printf("[before] fb_map points to: %p.\n", fb_map);
 	if (mmap_fb(&fb_map, fbfd) == -1) {
 		printf("mmap() failed with error [%s].\n", strerror(errno));
 		return -1;
-	} else {
-		printf("[after] fb_map points to: %p.\n", fb_map);
 	}
 
 	// if we successfully mapped memory for the framebuffer, we
@@ -84,6 +81,14 @@ void update_screen()
 
 void update_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
+	// if someone tried to update a region outside of the screen,
+	// just update until the end of the screen
+	if (x + width > WIDTH || y + height > HEIGHT)
+		width = WIDTH - x;
+
+	if (y + height > HEIGHT)
+		height = HEIGHT - y;
+
 	rect.dx = x;
 	rect.dy = y;
 	rect.width = width;
