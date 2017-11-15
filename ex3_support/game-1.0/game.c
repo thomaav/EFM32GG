@@ -42,7 +42,7 @@ struct player {
 };
 
 // almost the same as a player, except that it just points to the
-// player's projection instead
+// player's shape instead
 struct shape_projection {
 	int16_t x;
 	int16_t y;
@@ -360,15 +360,20 @@ void update_projection(struct shape_projection *projection)
 
 void gp_handler(int sig)
 {
-	// as we might be moving, draw were we currently are
-	// completely black to avoid having to backtrack
-	blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
-	blit_tetris_shape(BLACK, player.x, player.y, player.shape);
-
 	if (read(gpfd, &gp_state, GPBUF_SIZE) < 0) {
 		printf("read() for gpfd failed with error [%s].\n", strerror(errno));
 		return;
 	}
+
+	// sometimes we get an interrupt without the buttons having
+	// been pushed (unclear why) - ignore these
+	if (!gp_state)
+		return;
+
+	// as we might be moving, draw were we currently are
+	// completely black to avoid having to backtrack
+	blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
+	blit_tetris_shape(BLACK, player.x, player.y, player.shape);
 
 	switch (gp_state) {
 	case 1:
@@ -420,6 +425,14 @@ void register_SIGIO(int fd)
 	fcntl(fd, F_SETFL, oflags | FASYNC);
 }
 
+void __nanosleep(const struct timespec *req, struct timespec *rem)
+{
+	/* struct timespec _rem; */
+	struct timespec _rem;
+	if (nanosleep(req, rem) == -1 && errno == EINTR)
+		__nanosleep(req, &_rem);
+}
+
 int main(int argc, char *argv[])
 {
 	// reseed every run
@@ -452,7 +465,6 @@ int main(int argc, char *argv[])
 	register_SIGIO(gpfd);
 
 	// setup done, let's start playing
-	uint16_t ticker = 0;
 	new_player_shape();
 
 	// setup a projection to use
@@ -463,23 +475,29 @@ int main(int argc, char *argv[])
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 	blit_tetris_shape(GREEN, player.x, player.y, player.shape);
 
+	// timespecs used for custom nanosleep that keeps sleeping
+	// after signal
+	struct timespec req = {0}, rem = {0};
+	time_t sec = 1;
+	req.tv_sec = sec;
+	req.tv_nsec = 0;
+
 	for (;;) {
-		if (++ticker == 60) {
-			ticker = 0;
+		blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
+		blit_tetris_shape(BLACK, player.x, player.y, player.shape);
 
-			blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
-			blit_tetris_shape(BLACK, player.x, player.y, player.shape);
+		tick_tetris();
 
-			tick_tetris();
+		blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
+		blit_tetris_shape(GREEN, player.x, player.y, player.shape);
 
-			blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-			blit_tetris_shape(GREEN, player.x, player.y, player.shape);
+		blit_board(board);
 
-			blit_board(board);
-		}
-
-		// 16000000 = 16 000 000
-		nanosleep((const struct timespec[]){{0, 16000000L}}, NULL);
+		// yes - we do need the rem pointer here as well, as
+		// nanosleep expects a pointer to a const struct, and
+		// a non-const struct (it writes the remaining time
+		// back into &rem)
+		__nanosleep(&req, &rem);
 	}
 
 	if (teardown_screen() == -1) {
