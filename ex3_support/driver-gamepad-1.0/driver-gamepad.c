@@ -36,6 +36,13 @@
 #define GPIO_IFS         (0x6)
 #define GPIO_IFC         (0x7)
 
+#define DRIVER_NAME "gamepad"
+#define DEV_NR_COUNT 1
+#define GPIO_PC_SIZE 9
+#define GPIO_IRQ_SIZE 8
+#define GPIO_EVEN_IRQ_LINE 17
+#define GPIO_ODD_IRQ_LINE 18
+
 // own device-specific structure to mimic scull
 //
 // it is also possible to define whether to use alloc_chrdev or
@@ -141,7 +148,7 @@ static int __init gamepad_init(void)
 
 	// initialize a (_one_) chardev region with dynamic major part
 	// dynamic and minor set to 0
-	err = alloc_chrdev_region(&gp_dev.devno, 0, 1, "gamepad");
+	err = alloc_chrdev_region(&gp_dev.devno, 0, 1, DRIVER_NAME);
 	if (err) {
 		printk(KERN_WARNING "[gamepad]: Could not allocate chrdev region for gamepad. (%i).\n", err);
 		goto fail_alloc_chrdev;
@@ -153,7 +160,7 @@ static int __init gamepad_init(void)
 	gp_dev.cdev.ops = &gp_fops;
 
 	// setup GPIO before we tell the kernel about our new dev
-	gpio_pc_mem = request_mem_region(GPIO_PC_BASE, 9 * sizeof(u32), "gamepad");
+	gpio_pc_mem = request_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32), DRIVER_NAME);
 	if (!gpio_pc_mem) {
 		printk(KERN_WARNING "[gamepad]: Could not allocate memory for GPIO registers.\n");
 		err = -1;
@@ -161,7 +168,7 @@ static int __init gamepad_init(void)
 	}
 
 	// setup IRQ as well the same way we did GPIO
-	gpio_irq_mem = request_mem_region(GPIO_IRQ_BASE, 8 * sizeof(u32), "gamepad");
+	gpio_irq_mem = request_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32), DRIVER_NAME);
 	if (!gpio_irq_mem) {
 		printk(KERN_WARNING "[gamepad]: Could not allocate memory for IRQ registers.\n");
 		err = -1;
@@ -169,8 +176,8 @@ static int __init gamepad_init(void)
 	}
 
 	// ensure I/O memory is accessible to the kernel with mapping
-	gp_dev.gpio_pc_mem = ioremap_nocache(GPIO_PC_BASE, 9 * sizeof(u32));
-	gp_dev.gpio_irq_mem = ioremap_nocache(GPIO_IRQ_BASE, 8 * sizeof(u32));
+	gp_dev.gpio_pc_mem = ioremap_nocache(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
+	gp_dev.gpio_irq_mem = ioremap_nocache(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
 
 	// drive strength, input mode, internal pull-up (we don't need
 	// to enable clocks here - they are already enabled)
@@ -192,14 +199,14 @@ static int __init gamepad_init(void)
 
 	// make the driver appear in /dev (i.e. user space) by
 	// creating and registering its class
-	gp_dev.cl = class_create(THIS_MODULE, "gamepad");
+	gp_dev.cl = class_create(THIS_MODULE, DRIVER_NAME);
 	if (IS_ERR(gp_dev.cl)) {
 		printk(KERN_WARNING "[gamepad]: Failed to register device class.\n");
 		err = PTR_ERR(gp_dev.cl);
 		goto fail_class_create;
 	}
 
-	chrdev = device_create(gp_dev.cl, NULL, gp_dev.devno, NULL, "gamepad");
+	chrdev = device_create(gp_dev.cl, NULL, gp_dev.devno, NULL, DRIVER_NAME);
 	if (IS_ERR(chrdev)) {
 		printk(KERN_WARNING "[gamepad]: Failed to create device from class.\n");
 		err = PTR_ERR(chrdev);
@@ -208,9 +215,9 @@ static int __init gamepad_init(void)
 
 	// do not return if interrupts cannot be registered, as they
 	// are not specifically required to make the driver work
-	if (request_irq(17, &gpio_irq_handler, 0, "gamepad", &gp_dev))
+	if (request_irq(GPIO_EVEN_IRQ_LINE , &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
 		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Even.\n ");
-	if (request_irq(18, &gpio_irq_handler, 0, "gamepad", &gp_dev))
+	if (request_irq(GPIO_ODD_IRQ_LINE , &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
 		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Odd.\n ");
 
 	// now enable interrupt generation, as we have a functioning
@@ -224,10 +231,10 @@ static int __init gamepad_init(void)
  fail_class_create: cdev_del(&gp_dev.cdev);
  fail_cdev_add:
 	iounmap(gp_dev.gpio_irq_mem);
-	release_mem_region(GPIO_IRQ_BASE, 8 * sizeof(u32));
+	release_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
  fail_request_irq_mem_region:
 	iounmap(gp_dev.gpio_pc_mem);
-	release_mem_region(GPIO_PC_BASE, 9 * sizeof(u32));
+	release_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
  fail_request_gpio_mem_region: unregister_chrdev_region(gp_dev.devno, 1);
  fail_alloc_chrdev: return err;
 }
@@ -236,15 +243,15 @@ static void __exit gamepad_cleanup(void)
 {
 	// we did not necessarily actually get irq17, irq18, but any
 	// further errors trying to free them will not matter
-	free_irq(17, &gp_dev);
-	free_irq(18, &gp_dev);
+	free_irq(GPIO_EVEN_IRQ_LINE, &gp_dev);
+	free_irq(GPIO_ODD_IRQ_LINE , &gp_dev);
 	device_destroy(gp_dev.cl, gp_dev.devno);
 	class_destroy(gp_dev.cl);
 	cdev_del(&gp_dev.cdev);
 	iounmap(gp_dev.gpio_irq_mem);
-	release_mem_region(GPIO_IRQ_BASE, 8 * sizeof(u32));
+	release_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
 	iounmap(gp_dev.gpio_pc_mem);
-	release_mem_region(GPIO_PC_BASE, 9 * sizeof(u32));
+	release_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
 	unregister_chrdev_region(gp_dev.devno, 1);
 
 	printk("[gamepad]: Module removed successfully.\n");
