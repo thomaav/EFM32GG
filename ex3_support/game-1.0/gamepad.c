@@ -7,6 +7,15 @@
 
 #include "gamepad.h"
 
+int gpfd;
+uint8_t gp_state;
+
+bool tetris_tick_mutex;
+bool sigio_exec_deferred;
+uint8_t gp_deferred_state;
+
+void (*gp_state_handler)(uint8_t);
+
 int gp_init()
 {
 	gpfd = open("/dev/gamepad", O_RDWR);

@@ -9,6 +9,10 @@
 
 #include "framebuffer.h"
 
+struct fb_copyarea rect;
+int fbfd;
+uint16_t *fb_map;
+
 int mmap_fb(uint16_t **map, int fbfd)
 {
 	*map = mmap(0, FBSIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);

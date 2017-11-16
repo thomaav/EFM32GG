@@ -9,7 +9,7 @@
 CFLAGS += -O2 -g -Wall #-Wsign-compare -Wfloat-equal -Wformat-security #-Werror
 CPPFLAGS +=
 LDFLAGS +=
-OBJS = framebuffer.o signal.o util.o gamepad.o
+OBJS = framebuffer.o signal.o util.o gamepad.o tetris.o
 
 
 %.o: %.c
