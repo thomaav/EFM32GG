@@ -377,6 +377,11 @@ void restart_tetris()
 
 	new_player_shape();
 
+	// also draw the border again when we reset the game
+	for (i = 0; i < GAME_HEIGHT; ++i) {
+		paint_tetris_tile(WHITE, GAME_WIDTH, i);
+	}
+
 	update_screen(board);
 }
 
