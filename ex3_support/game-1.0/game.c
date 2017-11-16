@@ -353,6 +353,7 @@ void new_player_shape()
 	int random_shape = rand() % UNIQ_SHAPES;
 	memcpy_tetris_shape(player.shape, shapes[random_shape]);
 	player.color = get_shape_color(random_shape);
+	update_projection(&projection);
 
 	// even though restart_tetris might call new_player_shape again,
 	// after we have reset, it is not possible for the new shape
