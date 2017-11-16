@@ -47,17 +47,9 @@ int main(int argc, char *argv[])
 		// p_thread. if we don't do this, getting a signal
 		// during a tick would lead to some weird hiccups in
 		// the movement at seemingly random times
-		tetris_tick_mutex = 1;
-
-		blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
-		blit_tetris_shape(BLACK, player.x, player.y, player.shape);
-
-		tick_tetris();
-
-		blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-		blit_tetris_shape(player.color, player.x, player.y, player.shape);
-
-		tetris_tick_mutex = 0;
+		gp_mutex = 1;
+		tick_tetris_and_blit();
+		gp_mutex = 0;
 
 		if (sigio_exec_deferred) {
 			sigio_exec_deferred = 0;

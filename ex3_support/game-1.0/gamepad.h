@@ -8,7 +8,7 @@
 extern int gpfd;
 extern uint8_t gp_state;
 
-extern bool tetris_tick_mutex;
+extern bool gp_mutex;
 extern bool sigio_exec_deferred;
 extern uint8_t gp_deferred_state;
 

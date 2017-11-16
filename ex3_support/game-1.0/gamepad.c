@@ -10,7 +10,7 @@
 int gpfd;
 uint8_t gp_state;
 
-bool tetris_tick_mutex;
+bool gp_mutex;
 bool sigio_exec_deferred;
 uint8_t gp_deferred_state;
 
@@ -43,7 +43,7 @@ void gp_handler(int sig)
 
 	// if we are locked out of executing and getting deferred, set
 	// the deferred state as well
-	if (tetris_tick_mutex) {
+	if (gp_mutex) {
 		sigio_exec_deferred = 1;
 		gp_deferred_state = gp_state;
 		return;

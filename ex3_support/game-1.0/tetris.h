@@ -68,5 +68,6 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 void new_player_shape();
 void restart_tetris();
 bool tick_tetris();
+void tick_tetris_and_blit();
 void handle_tetris_gp(uint8_t gp_state);
 void initiate_tetris();

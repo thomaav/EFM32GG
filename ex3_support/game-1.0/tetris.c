@@ -57,43 +57,6 @@ uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
 	{0, 0, 0, 0}}
 };
 
-void initiate_tetris()
-{
-	// set the gamepad to send its state to our tetris handler
-	extern void (*gp_state_handler)(uint8_t);
-	gp_state_handler = &handle_tetris_gp;
-
-	// get rid of poor tux (i.e. just init to empty screen)
-	paint_screen(BLACK);
-
-	// we also want to draw a game border to the right of
-	// GAME_WIDTH only once
-	int i;
-	for (i = 0; i < GAME_HEIGHT; ++i) {
-		paint_tetris_tile(WHITE, GAME_WIDTH, i);
-	}
-
-	// read in colors
-	color_I = rgb888_to_rgb565(0, 255, 255);
-	color_J = rgb888_to_rgb565(0, 0, 255);
-	color_L = rgb888_to_rgb565(255, 172, 0);
-	color_O = rgb888_to_rgb565(255, 255, 0);
-	color_S = rgb888_to_rgb565(0, 255, 0);
-	color_T = rgb888_to_rgb565(154, 0, 255);
-	color_Z = rgb888_to_rgb565(255, 0, 0);
-
-	// setup done, let's start playing
-	restart_tetris();
-
-	// setup a projection to use
-	update_projection(&projection);
-
-	// initial paint after setting up values like border
-	blit_board(board);
-	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
-	blit_tetris_shape(player.color, player.x, player.y, player.shape);
-}
-
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
 	int i;
@@ -161,6 +124,54 @@ void rotate_shape(uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 			}
 		}
 	} while (illegal_shape_position(board, shape, player.x, player.y));
+}
+
+uint16_t get_shape_color(int shape_index)
+{
+	// one color for each shape
+	switch (shape_index) {
+	case 0:
+		return color_I;
+		break;
+	case 1:
+		return color_J;
+		break;
+	case 2:
+		return color_L;
+		break;
+	case 3:
+		return color_O;
+		break;
+	case 4:
+		return color_S;
+		break;
+	case 5:
+		return color_T;
+		break;
+	case 6:
+		return color_Z;
+		break;
+	default:
+		break;
+	}
+
+	return color_I;
+}
+
+void update_projection(struct shape_projection *projection)
+{
+	projection->shape = &(player.shape)[0];
+	projection->x = player.x;
+	projection->y = player.y;
+
+	// set projection to the position that it would land
+	for (;;) {
+		if (!illegal_shape_position(board, projection->shape, projection->x, projection->y + 1)) {
+			++projection->y;
+		} else {
+			break;
+		}
+	}
 }
 
 void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
@@ -280,38 +291,6 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	blit_board(board);
 }
 
-uint16_t get_shape_color(int shape_index)
-{
-	// one color for each shape
-	switch (shape_index) {
-	case 0:
-		return color_I;
-		break;
-	case 1:
-		return color_J;
-		break;
-	case 2:
-		return color_L;
-		break;
-	case 3:
-		return color_O;
-		break;
-	case 4:
-		return color_S;
-		break;
-	case 5:
-		return color_T;
-		break;
-	case 6:
-		return color_Z;
-		break;
-	default:
-		break;
-	}
-
-	return color_I;
-}
-
 void new_player_shape()
 {
 	player.x = PLAYER_INIT_X;
@@ -363,20 +342,15 @@ bool tick_tetris()
 	}
 }
 
-void update_projection(struct shape_projection *projection)
+void tick_tetris_and_blit()
 {
-	projection->shape = &(player.shape)[0];
-	projection->x = player.x;
-	projection->y = player.y;
+	blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
+	blit_tetris_shape(BLACK, player.x, player.y, player.shape);
 
-	// set projection to the position that it would land
-	for (;;) {
-		if (!illegal_shape_position(board, projection->shape, projection->x, projection->y + 1)) {
-			++projection->y;
-		} else {
-			break;
-		}
-	}
+	tick_tetris();
+
+	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
+	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
 void handle_tetris_gp(uint8_t gp_state)
@@ -417,6 +391,43 @@ void handle_tetris_gp(uint8_t gp_state)
 	update_projection(&projection);
 
 	// redraw ourselves after interrupt has handled action
+	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
+	blit_tetris_shape(player.color, player.x, player.y, player.shape);
+}
+
+void initiate_tetris()
+{
+	// set the gamepad to send its state to our tetris handler
+	extern void (*gp_state_handler)(uint8_t);
+	gp_state_handler = &handle_tetris_gp;
+
+	// get rid of poor tux (i.e. just init to empty screen)
+	paint_screen(BLACK);
+
+	// we also want to draw a game border to the right of
+	// GAME_WIDTH only once
+	int i;
+	for (i = 0; i < GAME_HEIGHT; ++i) {
+		paint_tetris_tile(WHITE, GAME_WIDTH, i);
+	}
+
+	// read in colors
+	color_I = rgb888_to_rgb565(0, 255, 255);
+	color_J = rgb888_to_rgb565(0, 0, 255);
+	color_L = rgb888_to_rgb565(255, 172, 0);
+	color_O = rgb888_to_rgb565(255, 255, 0);
+	color_S = rgb888_to_rgb565(0, 255, 0);
+	color_T = rgb888_to_rgb565(154, 0, 255);
+	color_Z = rgb888_to_rgb565(255, 0, 0);
+
+	// setup done, let's start playing
+	restart_tetris();
+
+	// setup a projection to use
+	update_projection(&projection);
+
+	// initial paint after setting up values like border
+	blit_board(board);
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
