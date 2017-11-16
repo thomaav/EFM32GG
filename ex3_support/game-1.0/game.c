@@ -13,6 +13,7 @@
 #include <time.h>
 
 #include "framebuffer.h"
+#include "signal.h"
 
 #define GPBUF_SIZE 1
 
@@ -126,7 +127,7 @@ bool tick_tetris();
 void update_projection(struct shape_projection *projection);
 uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b);
 void gp_handler(int sig);
-void register_SIGIO(int fd);
+void __nanosleep(const struct timespec *req, struct timespec *rem);
 
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
@@ -486,21 +487,6 @@ void gp_handler(int sig)
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
-void register_SIGIO(int fd)
-{
-	// register async notification on SIGIO with /dev/gamepad
-	struct sigaction gp_action;
-	memset(&gp_action, 0, sizeof(gp_action));
-	gp_action.sa_handler = gp_handler;
-	gp_action.sa_flags = 0;
-
-	sigaction(SIGIO, &gp_action, NULL);
-
-	fcntl(fd, F_SETOWN, getpid());
-	int oflags = fcntl(fd, F_GETFL);
-	fcntl(fd, F_SETFL, oflags | FASYNC);
-}
-
 void __nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	struct timespec _rem;
@@ -537,7 +523,7 @@ int main(int argc, char *argv[])
 	}
 
 	// register async notification on SIGIO with /dev/gamepad
-	register_SIGIO(gpfd);
+	register_SIGIO(gpfd, gp_handler);
 
 	// read in colors
 	color_I = rgb888_to_rgb565(0, 255, 255);

@@ -9,7 +9,7 @@
 CFLAGS += -O2 -g -Wall #-Wsign-compare -Wfloat-equal -Wformat-security #-Werror
 CPPFLAGS +=
 LDFLAGS +=
-OBJS = framebuffer.o
+OBJS = framebuffer.o signal.o
 
 
 %.o: %.c
