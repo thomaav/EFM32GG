@@ -62,6 +62,9 @@ struct shape_projection {
 
 static uint8_t gp_state;
 static int gpfd;
+static bool tetris_tick_mutex;
+static bool sigio_exec_deferred;
+static uint8_t gp_deferred_state;
 static uint16_t board[GAME_HEIGHT][GAME_WIDTH] = {{ 0 }};
 static struct shape_projection projection;
 static struct player player;
@@ -209,7 +212,7 @@ void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
 }
 
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
-			uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
+		       uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
 	int16_t i, j;
 
@@ -411,9 +414,25 @@ uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b)
 
 void gp_handler(int sig)
 {
+	// we need to do this even if we are deferring, as we need to
+	// know what the state of the button was
 	if (read(gpfd, &gp_state, GPBUF_SIZE) < 0) {
 		printf("read() for gpfd failed with error [%s].\n", strerror(errno));
 		return;
+	}
+
+	// if we are locked out of executing and getting deferred, set
+	// the deferred state as well
+	if (tetris_tick_mutex) {
+		sigio_exec_deferred = 1;
+		gp_deferred_state = gp_state;
+		return;
+	}
+
+	// are we handling a deferred handling?
+	if (gp_deferred_state) {
+		gp_state = gp_deferred_state;
+		gp_deferred_state = 0;
 	}
 
 	// sometimes we get an interrupt without the buttons having
@@ -459,6 +478,8 @@ void gp_handler(int sig)
 	// redraw ourselves after interrupt has handled action
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
+
+	printf("done handling interrupt.\n");
 }
 
 void register_SIGIO(int fd)
@@ -479,8 +500,8 @@ void register_SIGIO(int fd)
 void __nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	struct timespec _rem;
-	if (nanosleep(req, rem) == -1 && errno == EINTR)
-		__nanosleep(req, &_rem);
+	if (nanosleep(req, rem) == -1)
+		__nanosleep(rem, &_rem);
 }
 
 int main(int argc, char *argv[])
@@ -537,11 +558,18 @@ int main(int argc, char *argv[])
 	// timespecs used for custom nanosleep that keeps sleeping
 	// after signal
 	struct timespec req = {0}, rem = {0};
-	time_t sec = 1;
-	req.tv_sec = sec;
+	req.tv_sec = 1;
 	req.tv_nsec = 0;
 
 	for (;;) {
+		// wrap this code in a mutex to deferr signal handling
+		// (we know we are not spawning any more threads), so
+		// this is a very simple way to do it without
+		// p_thread. if we don't do this, getting a signal
+		// during a tick would lead to some weird hiccups in
+		// the movement at seemingly random times
+		tetris_tick_mutex = 1;
+
 		blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
 		blit_tetris_shape(BLACK, player.x, player.y, player.shape);
 
@@ -551,6 +579,13 @@ int main(int argc, char *argv[])
 		blit_tetris_shape(player.color, player.x, player.y, player.shape);
 
 		blit_board(board);
+
+		tetris_tick_mutex = 0;
+
+		if (sigio_exec_deferred) {
+			sigio_exec_deferred = 0;
+			gp_handler(SIGIO);
+		}
 
 		// yes - we do need the rem pointer here as well, as
 		// nanosleep expects a pointer to a const struct, and
