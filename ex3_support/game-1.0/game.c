@@ -311,7 +311,7 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 		}
 	}
 
-	update_screen(board);
+	blit_board(board);
 }
 
 uint16_t get_shape_color(int shape_index)
@@ -421,6 +421,11 @@ void gp_handler(int sig)
 		return;
 	}
 
+	// sometimes we get an interrupt without the buttons having
+	// been pushed (unclear why) - ignore these
+	if (!gp_state)
+		return;
+
 	// if we are locked out of executing and getting deferred, set
 	// the deferred state as well
 	if (tetris_tick_mutex) {
@@ -434,11 +439,6 @@ void gp_handler(int sig)
 		gp_state = gp_deferred_state;
 		gp_deferred_state = 0;
 	}
-
-	// sometimes we get an interrupt without the buttons having
-	// been pushed (unclear why) - ignore these
-	if (!gp_state)
-		return;
 
 	// as we might be moving, draw were we currently are
 	// completely black to avoid having to backtrack
@@ -478,8 +478,6 @@ void gp_handler(int sig)
 	// redraw ourselves after interrupt has handled action
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
-
-	printf("done handling interrupt.\n");
 }
 
 void register_SIGIO(int fd)
@@ -577,8 +575,6 @@ int main(int argc, char *argv[])
 
 		blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 		blit_tetris_shape(player.color, player.x, player.y, player.shape);
-
-		blit_board(board);
 
 		tetris_tick_mutex = 0;
 
