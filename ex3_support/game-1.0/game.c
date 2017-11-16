@@ -13,9 +13,9 @@
 #include <time.h>
 
 #include "framebuffer.h"
+#include "gamepad.h"
 #include "signal.h"
-
-#define GPBUF_SIZE 1
+#include "util.h"
 
 #define TILE_SIZE 10
 #define BORDER_WIDTH 1
@@ -38,13 +38,13 @@
 #define BLUE    (0x000F)
 
 // shape colors
-static uint16_t color_I;
-static uint16_t color_J;
-static uint16_t color_L;
-static uint16_t color_O;
-static uint16_t color_S;
-static uint16_t color_T;
-static uint16_t color_Z;
+uint16_t color_I;
+uint16_t color_J;
+uint16_t color_L;
+uint16_t color_O;
+uint16_t color_S;
+uint16_t color_T;
+uint16_t color_Z;
 
 struct player {
 	uint16_t x;
@@ -61,11 +61,6 @@ struct shape_projection {
 	uint8_t (*shape)[SHAPE_WIDTH];
 };
 
-static uint8_t gp_state;
-static int gpfd;
-static bool tetris_tick_mutex;
-static bool sigio_exec_deferred;
-static uint8_t gp_deferred_state;
 static uint16_t board[GAME_HEIGHT][GAME_WIDTH] = {{ 0 }};
 static struct shape_projection projection;
 static struct player player;
@@ -125,9 +120,6 @@ void new_player_shape();
 void restart_tetris();
 bool tick_tetris();
 void update_projection(struct shape_projection *projection);
-uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b);
-void gp_handler(int sig);
-void __nanosleep(const struct timespec *req, struct timespec *rem);
 
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
@@ -414,39 +406,8 @@ void update_projection(struct shape_projection *projection)
 	}
 }
 
-uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b)
+void handle_tetris_gp(uint8_t gp_state)
 {
-	return (uint16_t) ((r << 11) | (g << 5) | b);
-}
-
-void gp_handler(int sig)
-{
-	// we need to do this even if we are deferring, as we need to
-	// know what the state of the button was
-	if (read(gpfd, &gp_state, GPBUF_SIZE) < 0) {
-		printf("read() for gpfd failed with error [%s].\n", strerror(errno));
-		return;
-	}
-
-	// sometimes we get an interrupt without the buttons having
-	// been pushed (unclear why) - ignore these
-	if (!gp_state)
-		return;
-
-	// if we are locked out of executing and getting deferred, set
-	// the deferred state as well
-	if (tetris_tick_mutex) {
-		sigio_exec_deferred = 1;
-		gp_deferred_state = gp_state;
-		return;
-	}
-
-	// are we handling a deferred handling?
-	if (gp_deferred_state) {
-		gp_state = gp_deferred_state;
-		gp_deferred_state = 0;
-	}
-
 	// as we might be moving, draw were we currently are
 	// completely black to avoid having to backtrack
 	blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
@@ -487,23 +448,11 @@ void gp_handler(int sig)
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
-void __nanosleep(const struct timespec *req, struct timespec *rem)
+void initiate_tetris()
 {
-	struct timespec _rem;
-	if (nanosleep(req, rem) == -1)
-		__nanosleep(rem, &_rem);
-}
-
-int main(int argc, char *argv[])
-{
-	// reseed every run
-	srand(time(NULL));
-
-	// setup framebuffer
-	if (setup_screen() == -1) {
-		printf("setup_screen() failed.\n");
-		return -1;
-	}
+	// set the gamepad to send its state to our tetris handler
+	extern void (*gp_state_handler)(uint8_t);
+	gp_state_handler = &handle_tetris_gp;
 
 	// get rid of poor tux (i.e. just init to empty screen)
 	paint_screen(BLACK);
@@ -515,16 +464,6 @@ int main(int argc, char *argv[])
 		paint_tetris_tile(WHITE, GAME_WIDTH, i);
 	}
 
-	// setup to read gamepad
-	gpfd = open("/dev/gamepad", O_RDWR);
-	if (gpfd == -1) {
-		printf("open() for gpfd failed with error [%s].\n", strerror(errno));
-		return -1;
-	}
-
-	// register async notification on SIGIO with /dev/gamepad
-	register_SIGIO(gpfd, gp_handler);
-
 	// read in colors
 	color_I = rgb888_to_rgb565(0, 255, 255);
 	color_J = rgb888_to_rgb565(0, 0, 255);
@@ -535,7 +474,7 @@ int main(int argc, char *argv[])
 	color_Z = rgb888_to_rgb565(255, 0, 0);
 
 	// setup done, let's start playing
-	new_player_shape();
+	restart_tetris();
 
 	// setup a projection to use
 	update_projection(&projection);
@@ -544,12 +483,40 @@ int main(int argc, char *argv[])
 	blit_board(board);
 	blit_tetris_shape(BLUE, projection.x, projection.y, player.shape);
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
+}
+
+int main(int argc, char *argv[])
+{
+	// reseed every run
+	srand(time(NULL));
+
+	// setup framebuffer
+	if (setup_screen() == -1) {
+		printf("setup_screen() failed.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// setup to read gamepad
+	if (gp_init()) {
+		printf("Could not initialize gamepad. Quitting.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// register async notification on SIGIO with /dev/gamepad
+	extern int gpfd;
+	register_SIGIO(gpfd, gp_handler);
 
 	// timespecs used for custom nanosleep that keeps sleeping
 	// after signal
 	struct timespec req = {0}, rem = {0};
 	req.tv_sec = 1;
 	req.tv_nsec = 0;
+
+	// mutexes and locking
+	extern bool tetris_tick_mutex;
+	extern bool sigio_exec_deferred;
+
+	initiate_tetris();
 
 	for (;;) {
 		// wrap this code in a mutex to deferr signal handling
