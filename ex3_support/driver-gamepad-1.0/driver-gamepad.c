@@ -148,7 +148,7 @@ static int __init gamepad_init(void)
 
 	// initialize a (_one_) chardev region with dynamic major part
 	// dynamic and minor set to 0
-	err = alloc_chrdev_region(&gp_dev.devno, 0, 1, DRIVER_NAME);
+	err = alloc_chrdev_region(&gp_dev.devno, 0, DEV_NR_COUNT, DRIVER_NAME);
 	if (err) {
 		printk(KERN_WARNING "[gamepad]: Could not allocate chrdev region for gamepad. (%i).\n", err);
 		goto fail_alloc_chrdev;
@@ -191,7 +191,7 @@ static int __init gamepad_init(void)
 
 	// now that everything is set up, tell the kernel about the
 	// new character device
-	err = cdev_add(&gp_dev.cdev, gp_dev.devno, 1);
+	err = cdev_add(&gp_dev.cdev, gp_dev.devno, DEV_NR_COUNT);
 	if (err) {
 		printk(KERN_WARNING "[gamepad]: Error %d while adding gamepad.\n", err);
 		goto fail_cdev_add;
@@ -235,7 +235,7 @@ static int __init gamepad_init(void)
  fail_request_irq_mem_region:
 	iounmap(gp_dev.gpio_pc_mem);
 	release_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
- fail_request_gpio_mem_region: unregister_chrdev_region(gp_dev.devno, 1);
+ fail_request_gpio_mem_region: unregister_chrdev_region(gp_dev.devno, DEV_NR_COUNT);
  fail_alloc_chrdev: return err;
 }
 
@@ -252,7 +252,7 @@ static void __exit gamepad_cleanup(void)
 	release_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
 	iounmap(gp_dev.gpio_pc_mem);
 	release_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
-	unregister_chrdev_region(gp_dev.devno, 1);
+	unregister_chrdev_region(gp_dev.devno, DEV_NR_COUNT);
 
 	printk("[gamepad]: Module removed successfully.\n");
 }
@@ -260,5 +260,5 @@ static void __exit gamepad_cleanup(void)
 module_init(gamepad_init);
 module_exit(gamepad_cleanup);
 
-MODULE_DESCRIPTION("Small module, demo only, not very useful.");
+MODULE_DESCRIPTION("Gamepad driver used for exercise 3 in tdt4258");
 MODULE_LICENSE("GPL");
