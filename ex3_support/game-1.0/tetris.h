@@ -57,6 +57,7 @@ void paint_tetris_tile(uint16_t color, int16_t x, int16_t y);
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 			uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
 void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH]);
+void paint_queue(uint8_t game_height, uint8_t game_width);
 
 // board manipulation
 void shift_occupied_above_row(int row);

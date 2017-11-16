@@ -3,11 +3,20 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/queue.h>
 #include <time.h>
 
 #include "framebuffer.h"
 #include "tetris.h"
 #include "util.h"
+
+// create struct for queue to store the next shapes inbound, and
+// initialize a head with STAILQ_HEAD macro
+struct shape_node {
+	uint8_t (*shape)[SHAPE_WIDTH];
+	int color_index;
+	STAILQ_ENTRY(shape_node) nodes;
+}; STAILQ_HEAD(head_s, shape_node) shape_queue_head;
 
 uint16_t color_I;
 uint16_t color_J;
@@ -227,6 +236,31 @@ void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH])
 	update_screen();
 }
 
+void paint_queue(uint8_t game_height, uint8_t game_width)
+{
+	int i, j;
+	int shape_idx = 0;
+	int offset_top = 3;
+	uint16_t color;
+	struct shape_node *current_shape;
+
+	STAILQ_FOREACH(current_shape, &shape_queue_head, nodes) {
+		color = get_shape_color(current_shape->color_index);
+		for (i = 0; i < SHAPE_HEIGHT; ++i) {
+			for (j = 0; j < SHAPE_WIDTH; ++j) {
+				if ((current_shape->shape)[i][j])
+					paint_tetris_tile(color, game_width + 4 + j,
+							  shape_idx * (SHAPE_HEIGHT + 1) + i + offset_top);
+				else
+					paint_tetris_tile(BLACK, game_width + 4 + j,
+							  shape_idx * (SHAPE_HEIGHT + 1) + i + offset_top);
+			}
+		}
+
+		++shape_idx;
+	}
+}
+
 void shift_occupied_above_row(int row)
 {
 	int i, j;
@@ -287,18 +321,29 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			shift_occupied_above_row(i);
 		}
 	}
-
-	blit_board(board);
 }
 
 void new_player_shape()
 {
 	player.x = PLAYER_INIT_X;
 	player.y = PLAYER_INIT_Y;
-	int random_shape = rand() % UNIQ_SHAPES;
-	memcpy_tetris_shape(player.shape, shapes[random_shape]);
-	player.color = get_shape_color(random_shape);
+
+	// fetch new shape from the queue of shapes; remember to free
+	// the memory
+	struct shape_node *next_shape = STAILQ_FIRST(&shape_queue_head);
+	STAILQ_REMOVE_HEAD(&shape_queue_head, nodes);
+	memcpy_tetris_shape(player.shape, next_shape->shape);
+	player.color = get_shape_color(next_shape->color_index);
+	free(next_shape);
+
 	update_projection(&projection);
+
+	// insert new shape to the queue of coming shapes
+	struct shape_node *new_shape = malloc(sizeof(struct shape_node));
+	int random_shape = rand() % UNIQ_SHAPES;
+	new_shape->shape = shapes[random_shape];
+	new_shape->color_index = random_shape;
+	STAILQ_INSERT_TAIL(&shape_queue_head, new_shape, nodes);
 
 	// even though restart_tetris might call new_player_shape again,
 	// after we have reset, it is not possible for the new shape
@@ -306,6 +351,9 @@ void new_player_shape()
 	if (illegal_shape_position(board, player.shape, player.x, player.y)) {
 		restart_tetris();
 	}
+
+	paint_queue(GAME_HEIGHT, GAME_WIDTH);
+	blit_board(board);
 }
 
 void restart_tetris()
@@ -318,6 +366,25 @@ void restart_tetris()
 		for (j = 0; j < GAME_WIDTH; ++j) {
 			paint_tetris_tile(BLACK, j, i);
 		}
+	}
+
+	// empty shape queue in case we pressed reset
+	struct shape_node *current_shape;
+	while (!STAILQ_EMPTY(&shape_queue_head)) {
+		current_shape = STAILQ_FIRST(&shape_queue_head);
+		STAILQ_REMOVE_HEAD(&shape_queue_head, nodes);
+		free(current_shape);
+	}
+
+	// setup queue of shapes and fetch the first one
+	struct shape_node *new_shape;
+	int random_shape;
+	for (i = 0; i < 4; ++i) {
+		new_shape = malloc(sizeof(struct shape_node));
+		random_shape = rand() % UNIQ_SHAPES;
+		new_shape->shape = shapes[random_shape];
+		new_shape->color_index = random_shape;
+		STAILQ_INSERT_HEAD(&shape_queue_head, new_shape, nodes);
 	}
 
 	new_player_shape();
@@ -376,6 +443,11 @@ void handle_tetris_gp(uint8_t gp_state)
 		while (tick_tetris());
 		blit_board(board);
 		break;
+	case 16:
+		paint_screen(BLACK);
+		printf("Exiting tetris. Goodbye!\n");
+		exit(EXIT_SUCCESS);
+		break;
 	case 32:
 		restart_tetris();
 		break;
@@ -419,6 +491,9 @@ void initiate_tetris()
 	color_S = rgb888_to_rgb565(0, 255, 0);
 	color_T = rgb888_to_rgb565(154, 0, 255);
 	color_Z = rgb888_to_rgb565(255, 0, 0);
+
+	// initalize queue for shapes
+	STAILQ_INIT(&shape_queue_head);
 
 	// setup done, let's start playing
 	restart_tetris();
