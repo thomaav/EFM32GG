@@ -10,6 +10,9 @@
 #include "tetris.h"
 #include "util.h"
 
+// cheat to sleep $level length in main loop
+extern struct player player;
+
 int main(int argc, char *argv[])
 {
 	// reseed every run
@@ -52,7 +55,10 @@ int main(int argc, char *argv[])
 		// nanosleep expects a pointer to a const struct, and
 		// a non-const struct (it writes the remaining time
 		// back into &rem)
-		__ssleep(1);
+		//
+		// remove 100 msec for every level (highest level is 9
+		// for 900 msec)
+		__mssleep(1000 - 100 * player.level);
 	}
 
 	if (teardown_screen() == -1) {

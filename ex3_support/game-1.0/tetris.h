@@ -23,6 +23,8 @@ struct player {
 	uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH];
 	uint16_t color;
 	uint32_t score;
+	uint8_t lines_cleared;
+	uint8_t level;
 };
 
 // almost the same as a player, except that it just points to the
@@ -77,7 +79,7 @@ void paint_queue(uint8_t game_height, uint8_t game_width);
 void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16_t color);
 void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letters,
 		uint16_t x, uint16_t y, uint16_t color);
-void paint_score(uint32_t score, uint16_t x, uint16_t y, uint16_t color);
+void paint_digits(uint32_t score, uint16_t x, uint16_t y, uint16_t color);
 
 // board manipulation
 void shift_occupied_above_row(int row);

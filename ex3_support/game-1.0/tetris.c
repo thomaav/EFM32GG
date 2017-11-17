@@ -96,6 +96,37 @@ uint8_t score_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
 	 {1, 0, 0, 0},
 	 {1, 1, 1, 0}}
 };
+uint8_t level_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
+	{{1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {0, 1, 0, 0},
+	 {0, 1, 0, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}}
+};
 uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
 	{{1, 1, 1, 0},
 	 {1, 0, 1, 0},
@@ -130,7 +161,7 @@ uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
 	{{1, 1, 1, 0},
 	 {1, 0, 0, 0},
 	 {1, 1, 1, 0},
-	 {1, 0, 0, 0},
+	 {0, 0, 1, 0},
 	 {1, 1, 1, 0}},
 
 	{{1, 1, 1, 0},
@@ -391,7 +422,7 @@ void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letter
 	}
 }
 
-void paint_score(uint32_t score, uint16_t x, uint16_t y, uint16_t color)
+void paint_digits(uint32_t score, uint16_t x, uint16_t y, uint16_t color)
 {
 	struct decimal_string dstring = number_to_dstring(score);
 
@@ -467,6 +498,8 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 		}
 	}
 
+	player.lines_cleared += lines_scored;
+
 	switch (lines_scored) {
 	case 1:
 		player.score += 40;
@@ -483,6 +516,14 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	default:
 		break;
 	}
+
+	if (player.lines_cleared <= 0) {
+		player.level = 0;
+	} else if (player.lines_cleared >= 1 && player.lines_cleared < 90) {
+		player.level = player.lines_cleared / 10;
+	} else {
+		player.level = 9;
+	}
 }
 
 void new_player_shape()
@@ -490,8 +531,17 @@ void new_player_shape()
 	player.x = PLAYER_INIT_X;
 	player.y = PLAYER_INIT_Y;
 
-	// score
-	paint_score(player.score, 190, 70, WHITE);
+	// score and level (+ lines left to next level)
+	paint_digits(player.score, 200, 70, WHITE);
+	paint_digits(player.level, 200, 170, WHITE);
+
+	// pad with 0s for lines left here, since we want float: right
+	if (10 - (player.lines_cleared % 10) == 10) {
+		paint_digits(10 - (player.lines_cleared % 10), 260, 170, WHITE);
+	} else {
+		paint_digits(0, 260, 170, BLACK);
+		paint_digits(10 - (player.lines_cleared % 10), 280, 170, WHITE);
+	}
 
 	// fetch new shape from the queue of shapes; remember to free
 	// the memory
@@ -518,7 +568,8 @@ void new_player_shape()
 	}
 
 	paint_queue(GAME_HEIGHT, GAME_WIDTH);
-	paint_text(score_text, 5, 190, 30, WHITE);
+	paint_text(score_text, 5, 200, 30, WHITE);
+	paint_text(level_text, 5, 200, 130, WHITE);
 	blit_board(board);
 }
 
@@ -553,7 +604,15 @@ void restart_tetris()
 		STAILQ_INSERT_HEAD(&shape_queue_head, new_shape, nodes);
 	}
 
+	// reset score and level and draw over it
 	player.score = 0;
+	player.lines_cleared = 0;
+
+	paint_digits(player.score, 200, 70, WHITE);
+	paint_region(BLACK, 200, 70, 120, 30);
+	paint_digits(player.level, 200, 170, WHITE);
+	paint_region(BLACK, 200, 170, 120, 30);
+
 	new_player_shape();
 
 	// also draw the border again when we reset the game

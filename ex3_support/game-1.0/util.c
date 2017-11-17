@@ -24,6 +24,13 @@ void __ssleep(int sec)
 	__nanosleep(&req, &rem);
 }
 
+void __mssleep(int msec)
+{
+	req.tv_sec = msec / 1000;
+	req.tv_nsec = (msec - req.tv_sec * 1000) * 1000000L;
+	__nanosleep(&req, &rem);
+}
+
 struct decimal_string number_to_dstring(uint32_t number)
 {
 	struct decimal_string dstring;
