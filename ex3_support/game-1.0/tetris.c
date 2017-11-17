@@ -517,6 +517,11 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 		break;
 	}
 
+	// max score fitting into the score column that we write to
+	if (player.score > 999999) {
+		player.score = 999999;
+	}
+
 	if (player.lines_cleared <= 0) {
 		player.level = 0;
 	} else if (player.lines_cleared >= 1 && player.lines_cleared < 90) {
@@ -606,6 +611,7 @@ void restart_tetris()
 
 	// reset score and level and draw over it
 	player.score = 0;
+	player.level = 0;
 	player.lines_cleared = 0;
 
 	paint_digits(player.score, 200, 70, WHITE);
