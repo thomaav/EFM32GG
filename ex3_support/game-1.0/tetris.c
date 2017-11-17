@@ -61,9 +61,101 @@ uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
 	 {0, 0, 0, 0}},
 
 	{{1, 1, 0, 0},
-	{0, 1, 1, 0},
-	{0, 0, 0, 0},
-	{0, 0, 0, 0}}
+	 {0, 1, 1, 0},
+	 {0, 0, 0, 0},
+	 {0, 0, 0, 0}}
+};
+uint8_t score_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 0, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {1, 1, 0, 0},
+	 {1, 0, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}}
+};
+uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
+	{{1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{0, 0, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 0, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 0, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0},
+	 {0, 0, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0}},
+
+	{{1, 1, 1, 0},
+	 {1, 0, 1, 0},
+	 {1, 1, 1, 0},
+	 {0, 0, 1, 0},
+	 {1, 1, 1, 0}}
 };
 
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
@@ -197,6 +289,16 @@ void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
 		     TILE_SIZE - BORDER_WIDTH * 2, TILE_SIZE - BORDER_WIDTH * 2);
 }
 
+void paint_text_tile(uint16_t color, int16_t x, int16_t y)
+{
+	if (x < 0 || y < 0) {
+		printf("Could not paint tile x: %d, y: %d.\n", x, y);
+		return;
+	}
+
+	paint_region(color, x, y, LETTER_TILE_SIZE, LETTER_TILE_SIZE);
+}
+
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 		       uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
@@ -261,6 +363,47 @@ void paint_queue(uint8_t game_height, uint8_t game_width)
 	}
 }
 
+void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16_t color)
+{
+	int i, j;
+
+	for (i = 0; i < LETTER_HEIGHT; ++i) {
+		for (j = 0; j < LETTER_WIDTH; ++j) {
+			if (glyph[i][j])
+				paint_text_tile(color, x + j * LETTER_TILE_SIZE,
+						y + i * LETTER_TILE_SIZE);
+			else
+				paint_text_tile(BLACK, x + j * LETTER_TILE_SIZE,
+						y + i * LETTER_TILE_SIZE);
+		}
+	}
+}
+
+void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letters,
+		uint16_t x, uint16_t y, uint16_t color)
+{
+	uint8_t i;
+	uint16_t letter_x;
+
+	for (i = 0; i < num_letters; ++i) {
+		letter_x = x + LETTER_WIDTH * LETTER_TILE_SIZE * i;
+		paint_glyph(text[i], letter_x, y, color);
+	}
+}
+
+void paint_score(uint32_t score, uint16_t x, uint16_t y, uint16_t color)
+{
+	struct decimal_string dstring = number_to_dstring(score);
+
+	int i;
+	uint16_t letter_x;
+
+	for (i = 0; i < dstring.length; ++i) {
+		letter_x = x + LETTER_WIDTH * LETTER_TILE_SIZE * i;
+		paint_glyph(digit_text[dstring.digits[i]], letter_x, y, color);
+	}
+}
+
 void shift_occupied_above_row(int row)
 {
 	int i, j;
@@ -306,6 +449,7 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	// now check if we need to trickle something down after
 	// scoring points
 	bool all_occupied;
+	int lines_scored = 0;
 	for (i = y; i < y + SHAPE_HEIGHT; ++i) {
 		if (i >= GAME_HEIGHT)
 			continue;
@@ -318,8 +462,26 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 		}
 
 		if (all_occupied) {
+			++lines_scored;
 			shift_occupied_above_row(i);
 		}
+	}
+
+	switch (lines_scored) {
+	case 1:
+		player.score += 40;
+		break;
+	case 2:
+		player.score += 100;
+		break;
+	case 3:
+		player.score += 300;
+		break;
+	case 4:
+		player.score += 1200;
+		break;
+	default:
+		break;
 	}
 }
 
@@ -327,6 +489,9 @@ void new_player_shape()
 {
 	player.x = PLAYER_INIT_X;
 	player.y = PLAYER_INIT_Y;
+
+	// score
+	paint_score(player.score, 190, 70, WHITE);
 
 	// fetch new shape from the queue of shapes; remember to free
 	// the memory
@@ -353,6 +518,7 @@ void new_player_shape()
 	}
 
 	paint_queue(GAME_HEIGHT, GAME_WIDTH);
+	paint_text(score_text, 5, 190, 30, WHITE);
 	blit_board(board);
 }
 
@@ -387,6 +553,7 @@ void restart_tetris()
 		STAILQ_INSERT_HEAD(&shape_queue_head, new_shape, nodes);
 	}
 
+	player.score = 0;
 	new_player_shape();
 
 	// also draw the border again when we reset the game
@@ -394,7 +561,7 @@ void restart_tetris()
 		paint_tetris_tile(WHITE, GAME_WIDTH, i);
 	}
 
-	update_screen(board);
+	update_screen();
 }
 
 bool tick_tetris()
