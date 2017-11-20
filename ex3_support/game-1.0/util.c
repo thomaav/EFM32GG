@@ -1,3 +1,4 @@
+
 #include <stdint.h>
 #include <time.h>
 
@@ -5,11 +6,18 @@
 
 static struct timespec req = {0}, rem = {0};
 
+/*
+  Convert an RGB888 color to RGB565.
+ */
 uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b)
 {
 	return (uint16_t) ((r << 11) | (g << 5) | b);
 }
 
+/*
+  Wrapper for nanosleep, that keeps sleeping if woken up util the
+  required time has passed.
+ */
 void __nanosleep(const struct timespec *req, struct timespec *rem)
 {
 	struct timespec _rem;
@@ -17,6 +25,9 @@ void __nanosleep(const struct timespec *req, struct timespec *rem)
 		__nanosleep(rem, &_rem);
 }
 
+/*
+  nanosleep for n _seconds_.
+ */
 void __ssleep(int sec)
 {
 	req.tv_sec = 1;
@@ -24,6 +35,9 @@ void __ssleep(int sec)
 	__nanosleep(&req, &rem);
 }
 
+/*
+  nanosleep for n _milliseconds_.
+ */
 void __mssleep(int msec)
 {
 	req.tv_sec = msec / 1000;
@@ -31,6 +45,9 @@ void __mssleep(int msec)
 	__nanosleep(&req, &rem);
 }
 
+/*
+  Convert a number to a string of decimals.
+ */
 struct decimal_string number_to_dstring(uint32_t number)
 {
 	struct decimal_string dstring;

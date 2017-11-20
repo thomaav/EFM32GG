@@ -13,7 +13,7 @@
 #include <asm/signal.h>
 #include <asm/siginfo.h>
 
-// we are only concerned with button related input
+// gamepad input
 #define GPIO_PC_BASE     (0x40006048)
 #define GPIO_CTRL        (0x00)
 #define GPIO_MODEL       (0x01)
@@ -24,8 +24,9 @@
 #define GPIO_DOUTTGL     (0x06)
 #define GPIO_DIN         (0x07)
 #define GPIO_PINLOCKN    (0x08)
+#define GPIO_PC_SIZE 9
 
-// interrupts
+// GPIO interrupts
 #define GPIO_IRQ_BASE    (0x40006100)
 #define GPIO_EXTIPSELL   (0x0)
 #define GPIO_EXTIPSELH   (0x1)
@@ -35,13 +36,12 @@
 #define GPIO_IF          (0x5)
 #define GPIO_IFS         (0x6)
 #define GPIO_IFC         (0x7)
-
-#define DRIVER_NAME "gamepad"
-#define DEV_NR_COUNT 1
-#define GPIO_PC_SIZE 9
 #define GPIO_IRQ_SIZE 8
 #define GPIO_EVEN_IRQ_LINE 17
 #define GPIO_ODD_IRQ_LINE 18
+
+#define DRIVER_NAME "gamepad"
+#define DEV_NR_COUNT 1
 
 // own device-specific structure to mimic scull
 //
@@ -62,6 +62,10 @@ struct gp_chrdev {
 static struct gp_chrdev gp_dev;
 u8 first_interrupt;
 
+/*
+  Read the state of the gamepad buttons and convert into a byte-sized
+  format that is active-high. Pass the value to the user space buffer.
+ */
 static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
 	u32 GPIO_DIN_state;
@@ -83,6 +87,9 @@ static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, l
 	return (count == bytes_to_copy ? bytes_to_copy : 0);
 }
 
+/*
+  Register an interested process to the SIGIO signal.
+ */
 static int gamepad_fasync(int fd, struct file *filp, int mode)
 {
 	return fasync_helper(fd, filp, mode, &gp_dev.asqueue);
@@ -93,14 +100,15 @@ static int gamepad_open(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+/*
+  Unregister processes from the SIGIO signal.
+ */
 static int gamepad_release(struct inode *inode, struct file *filp)
 {
 	gamepad_fasync(-1, filp, 0);
 	return 0;
 }
 
-// we do not support writing to the device, we are only concerned with
-// reading values given by a button input register
 static struct file_operations gp_fops = {
 	.owner = THIS_MODULE,
 	.read = gamepad_read,
@@ -109,6 +117,10 @@ static struct file_operations gp_fops = {
 	.release = gamepad_release
 };
 
+/*
+  Add a message to the async. messaging queue used to signal user
+  space that a SIGIO signal has occurred.
+ */
 static irqreturn_t gpio_irq_handler(int irq, void *dev_id)
 {
 	u32 GPIO_IF_state;
@@ -227,6 +239,8 @@ static int __init gamepad_init(void)
 	printk(KERN_INFO "[gamepad]: Module loaded successfully.\n");
 	return 0;
 
+	// fall through goto to release all resources allocated should
+	// there be a failure
  fail_device_create: class_destroy(gp_dev.cl);
  fail_class_create: cdev_del(&gp_dev.cdev);
  fail_cdev_add:

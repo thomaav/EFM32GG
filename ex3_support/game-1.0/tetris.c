@@ -11,7 +11,8 @@
 #include "util.h"
 
 // create struct for queue to store the next shapes inbound, and
-// initialize a head with STAILQ_HEAD macro
+// initialize a head with STAILQ_HEAD macro, this is used to keep
+// track of the incoming tetrominoes
 struct shape_node {
 	uint8_t (*shape)[SHAPE_WIDTH];
 	int color_index;
@@ -189,6 +190,11 @@ uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
 	 {1, 1, 1, 0}}
 };
 
+/*
+  Copy the contents of a given shape into a buffer destination. This
+  is to be able to rotate the current shape of the player without
+  rotating the base shape.
+ */
 void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
 	int i;
@@ -197,6 +203,11 @@ void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[S
 	}
 }
 
+/*
+  Take an arbitraty x and y value and check whether placing the set
+  tetris shape on the board at that position would result in an
+  illegal state (e.g. overwriting the board or being outside).
+ */
 bool illegal_shape_position(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			    uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			    int16_t x, int16_t y)
@@ -232,6 +243,11 @@ bool illegal_shape_position(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	return false;
 }
 
+/*
+  Rotate a shape (seemingly in place to the caller). The function will
+  try rotating another 90 degrees until it eventually finds a position
+  that is legal. Should it find none, it will end up where it started.
+ */
 void rotate_shape(uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
 	// with malloc we could change where uint8_t **shape points
@@ -258,6 +274,10 @@ void rotate_shape(uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 	} while (illegal_shape_position(board, shape, player.x, player.y));
 }
 
+/*
+  Function to fetch the color of a shape (tetromino), should have just
+  been implemented with a macro.
+ */
 uint16_t get_shape_color(int shape_index)
 {
 	// one color for each shape
@@ -290,6 +310,10 @@ uint16_t get_shape_color(int shape_index)
 	return color_I;
 }
 
+/*
+  After a player has changed their position, update the projection of
+  said position to reflect the current state of the game correctly.
+ */
 void update_projection(struct shape_projection *projection)
 {
 	projection->shape = &(player.shape)[0];
@@ -306,6 +330,10 @@ void update_projection(struct shape_projection *projection)
 	}
 }
 
+/*
+  Paint the framebuffer region given by the tetris tile at x, y. Does
+  _NOT_ blit.
+ */
 void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
 {
 	uint16_t tile_x = x * TILE_SIZE;
@@ -320,6 +348,10 @@ void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
 		     TILE_SIZE - BORDER_WIDTH * 2, TILE_SIZE - BORDER_WIDTH * 2);
 }
 
+/*
+  Paint the tile of a text tile, that is half as wide as a tetris one
+  and also takes absolute positions on the LCD grid.
+ */
 void paint_text_tile(uint16_t color, int16_t x, int16_t y)
 {
 	if (x < 0 || y < 0) {
@@ -330,6 +362,11 @@ void paint_text_tile(uint16_t color, int16_t x, int16_t y)
 	paint_region(color, x, y, LETTER_TILE_SIZE, LETTER_TILE_SIZE);
 }
 
+/*
+  Paint the tetris tiles of a given shape, and blit it to the screen
+  (often by first erasing a tetris shape before moving, to avoid
+  backtracking).
+ */
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 		       uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
@@ -351,6 +388,10 @@ void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
 		      SHAPE_WIDTH * TILE_SIZE, SHAPE_HEIGHT * TILE_SIZE);
 }
 
+/*
+  Paint all taken tiles of the board, and then blit the entire screen
+  for consistency.
+ */
 void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH])
 {
 	int i, j;
@@ -369,6 +410,10 @@ void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH])
 	update_screen();
 }
 
+/*
+  Paint the queue of incoming tetrominoes by drawing all of the shapes
+  normally.
+ */
 void paint_queue(uint8_t game_height, uint8_t game_width)
 {
 	int i, j;
@@ -394,6 +439,9 @@ void paint_queue(uint8_t game_height, uint8_t game_width)
 	}
 }
 
+/*
+  Paint a single glyph, e.g. "1" or "S".
+ */
 void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16_t color)
 {
 	int i, j;
@@ -410,6 +458,9 @@ void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16
 	}
 }
 
+/*
+  Paint all the glyphs in a text.
+ */
 void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letters,
 		uint16_t x, uint16_t y, uint16_t color)
 {
@@ -422,6 +473,10 @@ void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letter
 	}
 }
 
+/*
+  Like paint text, but has to fetch the decimal string before drawing
+  the text.
+ */
 void paint_digits(uint32_t score, uint16_t x, uint16_t y, uint16_t color)
 {
 	struct decimal_string dstring = number_to_dstring(score);
@@ -435,6 +490,10 @@ void paint_digits(uint32_t score, uint16_t x, uint16_t y, uint16_t color)
 	}
 }
 
+/*
+  Shift all rows above the given row down one, this is used to trickle
+  down the state of the game when a line is cleared.
+ */
 void shift_occupied_above_row(int row)
 {
 	int i, j;
@@ -463,6 +522,12 @@ void shift_occupied_above_row(int row)
 	}
 }
 
+/*
+  When a tetromino hits the board and can go no further, it should be
+  transferred to the board before a player receives a new
+  tetromino. It is then no longer an actual shape, but a part of the
+  board. We also take care of scoring and leveling here.
+ */
 void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 			     uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH],
 			     int16_t x, int16_t y)
@@ -531,6 +596,11 @@ void transfer_shape_to_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	}
 }
 
+/*
+  Reset the player position and projection, and give the next
+  tetromino in the queue. Also insert a new shape when popping from
+  the queue.
+ */
 void new_player_shape()
 {
 	player.x = PLAYER_INIT_X;
@@ -578,6 +648,9 @@ void new_player_shape()
 	blit_board(board);
 }
 
+/*
+  Restart the tetris game entirely.
+ */
 void restart_tetris()
 {
 	// to avoid having to draw all black in blit_board,
@@ -629,6 +702,10 @@ void restart_tetris()
 	update_screen();
 }
 
+/*
+  Tick the tetris game, which usually means moving a tetromino further
+  down one step, or adding it to the board if it has no place to go.
+ */
 bool tick_tetris()
 {
 	if (!illegal_shape_position(board, player.shape, player.x, player.y + 1)) {
@@ -641,6 +718,12 @@ bool tick_tetris()
 	}
 }
 
+/*
+  Wrapper around ticking tetris that also blits, this is needed so
+  that a fall through can be simulated with ticking the tetris until
+  the piece no longer can go anywhere. This is called during the main
+  loop.
+ */
 void tick_tetris_and_blit()
 {
 	blit_tetris_shape(BLACK, projection.x, projection.y, player.shape);
@@ -652,6 +735,12 @@ void tick_tetris_and_blit()
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
+/*
+  A pointer to this function is passed to the function that handles
+  SIGIO signals, and can pass the gamepad value to the game's own
+  handler. Handle what happens next according to which button the user
+  has pressed.
+ */
 void handle_tetris_gp(uint8_t gp_state)
 {
 	// as we might be moving, draw were we currently are
@@ -699,6 +788,11 @@ void handle_tetris_gp(uint8_t gp_state)
 	blit_tetris_shape(player.color, player.x, player.y, player.shape);
 }
 
+/*
+  Initiate tetris, i.e. set up the handler of SIGIO signals, paint the
+  screen an initial black, setup some colors and a queue of
+  tetrominoes and start the game.
+ */
 void initiate_tetris()
 {
 	// set the gamepad to send its state to our tetris handler

@@ -13,6 +13,9 @@ struct fb_copyarea rect;
 int fbfd;
 uint16_t *fb_map;
 
+/*
+  Memory map the framebuffer file descriptor for easier use.
+ */
 int mmap_fb(uint16_t **map, int fbfd)
 {
 	*map = mmap(0, FBSIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
@@ -23,6 +26,9 @@ int mmap_fb(uint16_t **map, int fbfd)
 	return 0;
 }
 
+/*
+  munmap the memory that was mapped with mmap_fb.
+ */
 int unmap_fb(uint16_t **map)
 {
 	if (munmap(*map, FBSIZE) == -1)
@@ -31,6 +37,10 @@ int unmap_fb(uint16_t **map)
 	return 0;
 }
 
+/*
+  Open the framebuffer, assign a file descriptor, memory map it, and
+  set up a rectangle for operations on the framebuffer.
+ */
 int setup_screen()
 {
 	fbfd = open("/dev/fb0", O_RDWR);
@@ -73,6 +83,9 @@ int teardown_screen()
 	return 0;
 }
 
+/*
+  Update the entire screen.
+ */
 void update_screen()
 {
 	rect.dx = 0;
@@ -83,6 +96,9 @@ void update_screen()
 	ioctl(fbfd, 0x4680, &rect);
 }
 
+/*
+  Update only a region of the framebuffer to the LCD screen.
+*/
 void update_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
 	// if someone tried to update a region outside of the screen,
@@ -119,6 +135,11 @@ void paint_screen(uint16_t color)
 	update_screen();
 }
 
+/*
+  Paint a region by changing the underlying array that is memory
+  mapped to the device. Do not, however, actually blit the region to
+  the screen.
+ */
 void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
 	uint16_t i, j;

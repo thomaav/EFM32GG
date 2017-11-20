@@ -5,6 +5,10 @@
 
 #include "signal.h"
 
+/*
+  Register our process as interested in SIGIO from the given file
+  descriptor.
+ */
 void register_SIGIO(int fd, void *act)
 {
 	// register async notification on SIGIO with /dev/gamepad
