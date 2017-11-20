@@ -23,13 +23,11 @@ int main(int argc, char *argv[])
 		printf("setup_screen() failed.\n");
 		exit(EXIT_FAILURE);
 	}
-
 	// setup to read gamepad
 	if (gp_init()) {
 		printf("Could not initialize gamepad. Quitting.\n");
 		exit(EXIT_FAILURE);
 	}
-
 	// register async notification on SIGIO with /dev/gamepad
 	register_SIGIO(gpfd, gp_handler);
 
@@ -50,7 +48,6 @@ int main(int argc, char *argv[])
 			sigio_exec_deferred = 0;
 			gp_handler(SIGIO);
 		}
-
 		// yes - we do need the rem pointer here as well, as
 		// nanosleep expects a pointer to a const struct, and
 		// a non-const struct (it writes the remaining time

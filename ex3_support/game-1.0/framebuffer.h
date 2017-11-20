@@ -13,8 +13,8 @@ extern struct fb_copyarea rect;
 extern int fbfd;
 extern uint16_t *fb_map;
 
-int mmap_fb(uint16_t **map, int fbfd);
-int unmap_fb(uint16_t **map);
+int mmap_fb(uint16_t ** map, int fbfd);
+int unmap_fb(uint16_t ** map);
 
 int setup_screen();
 int teardown_screen();
@@ -23,4 +23,5 @@ void update_screen();
 void update_region(uint16_t x, uint16_t y, uint16_t width, uint16_t height);
 void clear_screen();
 void paint_screen(uint16_t color);
-void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height);
+void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width,
+		  uint16_t height);

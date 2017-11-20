@@ -14,10 +14,11 @@
 // initialize a head with STAILQ_HEAD macro, this is used to keep
 // track of the incoming tetrominoes
 struct shape_node {
-	uint8_t (*shape)[SHAPE_WIDTH];
+	uint8_t(*shape)[SHAPE_WIDTH];
 	int color_index;
-	STAILQ_ENTRY(shape_node) nodes;
-}; STAILQ_HEAD(head_s, shape_node) shape_queue_head;
+	 STAILQ_ENTRY(shape_node) nodes;
+};
+STAILQ_HEAD(head_s, shape_node) shape_queue_head;
 
 uint16_t color_I;
 uint16_t color_J;
@@ -29,7 +30,8 @@ uint16_t color_Z;
 
 struct shape_projection projection;
 struct player player;
-uint16_t board[GAME_HEIGHT][GAME_WIDTH] = {{0}};
+uint16_t board[GAME_HEIGHT][GAME_WIDTH] = { {0} };
+
 uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
 	{{0, 0, 0, 0},
 	 {1, 1, 1, 1},
@@ -66,6 +68,7 @@ uint8_t shapes[UNIQ_SHAPES][SHAPE_HEIGHT][SHAPE_WIDTH] = {
 	 {0, 0, 0, 0},
 	 {0, 0, 0, 0}}
 };
+
 uint8_t score_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
 	{{1, 1, 1, 0},
 	 {1, 0, 0, 0},
@@ -97,6 +100,7 @@ uint8_t score_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
 	 {1, 0, 0, 0},
 	 {1, 1, 1, 0}}
 };
+
 uint8_t level_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
 	{{1, 0, 0, 0},
 	 {1, 0, 0, 0},
@@ -128,6 +132,7 @@ uint8_t level_text[5][LETTER_HEIGHT][LETTER_WIDTH] = {
 	 {1, 0, 0, 0},
 	 {1, 1, 1, 0}}
 };
+
 uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
 	{{1, 1, 1, 0},
 	 {1, 0, 1, 0},
@@ -195,7 +200,8 @@ uint8_t digit_text[10][LETTER_HEIGHT][LETTER_WIDTH] = {
   is to be able to rotate the current shape of the player without
   rotating the base shape.
  */
-void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH], uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
+void memcpy_tetris_shape(uint8_t dst[SHAPE_HEIGHT][SHAPE_WIDTH],
+			 uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 {
 	int i;
 	for (i = 0; i < SHAPE_HEIGHT; ++i) {
@@ -233,7 +239,7 @@ bool illegal_shape_position(uint16_t board[GAME_HEIGHT][GAME_WIDTH],
 	// if part of the shape will be where the board is occupied,
 	// it is illegal
 	for (i = 0; i < SHAPE_HEIGHT; ++i) {
-		for (j = 0; j < SHAPE_WIDTH; ++j)  {
+		for (j = 0; j < SHAPE_WIDTH; ++j) {
 			if (board[y + i][x + j] && shape[i][j]) {
 				return true;
 			}
@@ -261,7 +267,8 @@ void rotate_shape(uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH])
 		// for 90 degree rotation, but it is a bit more complex
 		for (i = SHAPE_HEIGHT - 1; i >= 0; --i) {
 			for (j = SHAPE_WIDTH - 1; j >= 0; --j) {
-				tmp_rshape[j][i] = shape[SHAPE_HEIGHT - 1 - i][j];
+				tmp_rshape[j][i] =
+				    shape[SHAPE_HEIGHT - 1 - i][j];
 			}
 		}
 
@@ -322,7 +329,9 @@ void update_projection(struct shape_projection *projection)
 
 	// set projection to the position that it would land
 	for (;;) {
-		if (!illegal_shape_position(board, projection->shape, projection->x, projection->y + 1)) {
+		if (!illegal_shape_position
+		    (board, projection->shape, projection->x,
+		     projection->y + 1)) {
 			++projection->y;
 		} else {
 			break;
@@ -345,7 +354,8 @@ void paint_tetris_tile(uint16_t color, int16_t x, int16_t y)
 	}
 
 	paint_region(color, tile_x + BORDER_WIDTH, tile_y + BORDER_WIDTH,
-		     TILE_SIZE - BORDER_WIDTH * 2, TILE_SIZE - BORDER_WIDTH * 2);
+		     TILE_SIZE - BORDER_WIDTH * 2,
+		     TILE_SIZE - BORDER_WIDTH * 2);
 }
 
 /*
@@ -427,11 +437,17 @@ void paint_queue(uint8_t game_height, uint8_t game_width)
 		for (i = 0; i < SHAPE_HEIGHT; ++i) {
 			for (j = 0; j < SHAPE_WIDTH; ++j) {
 				if ((current_shape->shape)[i][j])
-					paint_tetris_tile(color, game_width + 4 + j,
-							  shape_idx * (SHAPE_HEIGHT + 1) + i + offset_top);
+					paint_tetris_tile(color,
+							  game_width + 4 + j,
+							  shape_idx *
+							  (SHAPE_HEIGHT + 1) +
+							  i + offset_top);
 				else
-					paint_tetris_tile(BLACK, game_width + 4 + j,
-							  shape_idx * (SHAPE_HEIGHT + 1) + i + offset_top);
+					paint_tetris_tile(BLACK,
+							  game_width + 4 + j,
+							  shape_idx *
+							  (SHAPE_HEIGHT + 1) +
+							  i + offset_top);
 			}
 		}
 
@@ -442,7 +458,8 @@ void paint_queue(uint8_t game_height, uint8_t game_width)
 /*
   Paint a single glyph, e.g. "1" or "S".
  */
-void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16_t color)
+void paint_glyph(uint8_t(*glyph)[LETTER_WIDTH], uint16_t x, uint16_t y,
+		 uint16_t color)
 {
 	int i, j;
 
@@ -461,8 +478,8 @@ void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16
 /*
   Paint all the glyphs in a text.
  */
-void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letters,
-		uint16_t x, uint16_t y, uint16_t color)
+void paint_text(uint8_t(*text)[LETTER_HEIGHT][LETTER_WIDTH],
+		uint8_t num_letters, uint16_t x, uint16_t y, uint16_t color)
 {
 	uint8_t i;
 	uint16_t letter_x;
@@ -513,7 +530,7 @@ void shift_occupied_above_row(int row)
 	// empty, so others don't have to think about it (we do not
 	// blit the screen, though, we should assume that the caller
 	// does that - just update the fb map)
-	for (i = 0; i <= row ; ++i) {
+	for (i = 0; i <= row; ++i) {
 		for (j = 0; j < GAME_WIDTH; ++j) {
 			if (!board[i][j]) {
 				paint_tetris_tile(BLACK, j, i);
@@ -708,11 +725,13 @@ void restart_tetris()
  */
 bool tick_tetris()
 {
-	if (!illegal_shape_position(board, player.shape, player.x, player.y + 1)) {
+	if (!illegal_shape_position
+	    (board, player.shape, player.x, player.y + 1)) {
 		++player.y;
 		return true;
 	} else {
-		transfer_shape_to_board(board, player.shape, player.x, player.y);
+		transfer_shape_to_board(board, player.shape, player.x,
+					player.y);
 		new_player_shape();
 		return false;
 	}
@@ -750,18 +769,20 @@ void handle_tetris_gp(uint8_t gp_state)
 
 	switch (gp_state) {
 	case 1:
-		if (!illegal_shape_position(board, player.shape, player.x - 1, player.y))
+		if (!illegal_shape_position
+		    (board, player.shape, player.x - 1, player.y))
 			--player.x;
 		break;
 	case 2:
 		rotate_shape(player.shape);
 		break;
 	case 4:
-		if (!illegal_shape_position(board, player.shape, player.x + 1, player.y))
+		if (!illegal_shape_position
+		    (board, player.shape, player.x + 1, player.y))
 			++player.x;
 		break;
 	case 8:
-		while (tick_tetris());
+		while (tick_tetris()) ;
 		blit_board(board);
 		break;
 	case 16:
@@ -796,7 +817,7 @@ void handle_tetris_gp(uint8_t gp_state)
 void initiate_tetris()
 {
 	// set the gamepad to send its state to our tetris handler
-	extern void (*gp_state_handler)(uint8_t);
+	extern void (*gp_state_handler) (uint8_t);
 	gp_state_handler = &handle_tetris_gp;
 
 	// get rid of poor tux (i.e. just init to empty screen)

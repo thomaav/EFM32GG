@@ -16,7 +16,7 @@ uint16_t *fb_map;
 /*
   Memory map the framebuffer file descriptor for easier use.
  */
-int mmap_fb(uint16_t **map, int fbfd)
+int mmap_fb(uint16_t ** map, int fbfd)
 {
 	*map = mmap(0, FBSIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
 
@@ -29,7 +29,7 @@ int mmap_fb(uint16_t **map, int fbfd)
 /*
   munmap the memory that was mapped with mmap_fb.
  */
-int unmap_fb(uint16_t **map)
+int unmap_fb(uint16_t ** map)
 {
 	if (munmap(*map, FBSIZE) == -1)
 		return -1;
@@ -48,13 +48,11 @@ int setup_screen()
 		printf("open() failed with error [%s].\n", strerror(errno));
 		return -1;
 	}
-
 	// actually map /dev/fb0 to some memory
 	if (mmap_fb(&fb_map, fbfd) == -1) {
 		printf("mmap() failed with error [%s].\n", strerror(errno));
 		return -1;
 	}
-
 	// if we successfully mapped memory for the framebuffer, we
 	// also want to make sure that the copyarea rectangle is
 	// initialized, here to the width and height of the entire
@@ -140,7 +138,8 @@ void paint_screen(uint16_t color)
   mapped to the device. Do not, however, actually blit the region to
   the screen.
  */
-void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+void paint_region(uint16_t color, uint16_t x, uint16_t y, uint16_t width,
+		  uint16_t height)
 {
 	uint16_t i, j;
 

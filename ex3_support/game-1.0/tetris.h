@@ -32,7 +32,7 @@ struct player {
 struct shape_projection {
 	int16_t x;
 	int16_t y;
-	uint8_t (*shape)[SHAPE_WIDTH];
+	 uint8_t(*shape)[SHAPE_WIDTH];
 };
 
 // shape colors
@@ -73,12 +73,13 @@ void update_projection(struct shape_projection *projection);
 void paint_tetris_tile(uint16_t color, int16_t x, int16_t y);
 void paint_text_tile(uint16_t color, int16_t x, int16_t y);
 void blit_tetris_shape(uint16_t color, int16_t x, int16_t y,
-			uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
+		       uint8_t shape[SHAPE_HEIGHT][SHAPE_WIDTH]);
 void blit_board(uint16_t board[GAME_HEIGHT][GAME_WIDTH]);
 void paint_queue(uint8_t game_height, uint8_t game_width);
-void paint_glyph(uint8_t (*glyph)[LETTER_WIDTH], uint16_t x, uint16_t  y, uint16_t color);
-void paint_text(uint8_t (*text)[LETTER_HEIGHT][LETTER_WIDTH], uint8_t num_letters,
-		uint16_t x, uint16_t y, uint16_t color);
+void paint_glyph(uint8_t(*glyph)[LETTER_WIDTH], uint16_t x, uint16_t y,
+		 uint16_t color);
+void paint_text(uint8_t(*text)[LETTER_HEIGHT][LETTER_WIDTH],
+		uint8_t num_letters, uint16_t x, uint16_t y, uint16_t color);
 void paint_digits(uint32_t score, uint16_t x, uint16_t y, uint16_t color);
 
 // board manipulation

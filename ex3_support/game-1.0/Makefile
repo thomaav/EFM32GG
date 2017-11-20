@@ -26,4 +26,7 @@ install:
 
 .PHONY: install clean
 
-# end of development makefile
+.PHONY : pretty
+pretty :
+	-indent *.c *.h
+

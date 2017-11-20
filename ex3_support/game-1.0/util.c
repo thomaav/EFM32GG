@@ -4,7 +4,8 @@
 
 #include "util.h"
 
-static struct timespec req = {0}, rem = {0};
+static struct timespec req = { 0 }, rem = {
+0};
 
 /*
   Convert an RGB888 color to RGB565.
@@ -52,7 +53,8 @@ struct decimal_string number_to_dstring(uint32_t number)
 {
 	struct decimal_string dstring;
 
-	int i = 0; int j;
+	int i = 0;
+	int j;
 	// special case for 0 points
 	if (!number) {
 		dstring.digits[0] = 0;
