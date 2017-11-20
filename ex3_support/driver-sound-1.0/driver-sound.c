@@ -138,7 +138,7 @@ static u8 first_dma_interrupt = 1;
   Print the absolute address value of a register, as well as its
   contents.
  */
-static void read_register_contents(u32 *reg)
+static void read_register_contents(u32 * reg)
 {
 	u32 register_state;
 	register_state = ioread32(reg);
@@ -162,7 +162,8 @@ static void read_register_contents(u32 *reg)
 /* 	pr_info("string written was, %s\n", kbuf); */
 /* } */
 
-static ssize_t sound_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+static ssize_t sound_read(struct file *filp, char __user * buf, size_t count,
+			  loff_t * f_pos)
 {
 	return 0;
 }
@@ -248,20 +249,18 @@ static int __init template_init(void)
 
 	// initialize sound dev for ourselves to mimic scull
 	sound_dev = (struct sound_chrdev) {
-		.devno = 0,
-		.cl = 0,
-		.timer3_mem = 0,
-		.dac_mem = 0,
-	};
+	.devno = 0,.cl = 0,.timer3_mem = 0,.dac_mem = 0,};
 
 	// initialize a (_one_) chardev region with dynamic major part
 	// dynamic and minor set to 0
-	err = alloc_chrdev_region(&sound_dev.devno, 0, DEV_NR_COUNT, DRIVER_NAME);
+	err =
+	    alloc_chrdev_region(&sound_dev.devno, 0, DEV_NR_COUNT, DRIVER_NAME);
 	if (err) {
-		printk(KERN_WARNING "[sound]: Could not allocate chrdev region for sound. (%i).\n", err);
+		printk(KERN_WARNING
+		       "[sound]: Could not allocate chrdev region for sound. (%i).\n",
+		       err);
 		goto fail_alloc_chrdev;
 	}
-
 	// create the actual kernel character device
 	cdev_init(&sound_dev.cdev, &sound_fops);
 	sound_dev.cdev.owner = THIS_MODULE;
@@ -273,48 +272,65 @@ static int __init template_init(void)
 	//
 
 	// setup DMA before we tell the kernel about our new dev
-	dma_upper_mem = request_mem_region(DMA_UPPER_BASE, DMA_UPPER_REGISTERS * sizeof(u32), DRIVER_NAME);
+	dma_upper_mem =
+	    request_mem_region(DMA_UPPER_BASE,
+			       DMA_UPPER_REGISTERS * sizeof(u32), DRIVER_NAME);
 	if (!dma_upper_mem) {
-		printk(KERN_WARNING "[sound]: Could not allocate memory for DMA registers.\n");
+		printk(KERN_WARNING
+		       "[sound]: Could not allocate memory for DMA registers.\n");
 		err = -1;
 		goto fail_request_dma_upper_mem_region;
 	}
-	dma_lower_mem = request_mem_region(DMA_LOWER_BASE, DMA_LOWER_REGISTERS * sizeof(u32), DRIVER_NAME);
+	dma_lower_mem =
+	    request_mem_region(DMA_LOWER_BASE,
+			       DMA_LOWER_REGISTERS * sizeof(u32), DRIVER_NAME);
 	if (!dma_lower_mem) {
-		printk(KERN_WARNING "[sound]: Could not allocate memory for DMA registers.\n");
+		printk(KERN_WARNING
+		       "[sound]: Could not allocate memory for DMA registers.\n");
 		err = -1;
 		goto fail_request_dma_lower_mem_region;
 	}
-
 	// setup PRS before we tell the kernel about our new dev
-	prs_mem = request_mem_region(PRS_BASE, PRS_REGISTERS * sizeof(u32), DRIVER_NAME);
+	prs_mem =
+	    request_mem_region(PRS_BASE, PRS_REGISTERS * sizeof(u32),
+			       DRIVER_NAME);
 	if (!prs_mem) {
-		printk(KERN_WARNING "[sound]: Could not allocate memory for PRS registers.\n");
+		printk(KERN_WARNING
+		       "[sound]: Could not allocate memory for PRS registers.\n");
 		err = -1;
 		goto fail_request_prs_mem_region;
 	}
-
 	// setup Timer3 before we tell the kernel about our new dev
-	timer3_mem = request_mem_region(TIMER3_BASE, TIMER3_REGISTERS * sizeof(u32), DRIVER_NAME);
+	timer3_mem =
+	    request_mem_region(TIMER3_BASE, TIMER3_REGISTERS * sizeof(u32),
+			       DRIVER_NAME);
 	if (!timer3_mem) {
-		printk(KERN_WARNING "[sound]: Could not allocate memory for Timer3 registers.\n");
+		printk(KERN_WARNING
+		       "[sound]: Could not allocate memory for Timer3 registers.\n");
 		err = -1;
 		goto fail_request_timer3_mem_region;
 	}
-
 	// setup DAC before we tell the kernel about our new dev
-	dac_mem = request_mem_region(DAC0_BASE, DAC_REGISTERS * sizeof(u32), DRIVER_NAME);
+	dac_mem =
+	    request_mem_region(DAC0_BASE, DAC_REGISTERS * sizeof(u32),
+			       DRIVER_NAME);
 	if (!dac_mem) {
-		printk(KERN_WARNING "[gamepad]: Could not allocate memory for DAC registers.\n");
+		printk(KERN_WARNING
+		       "[gamepad]: Could not allocate memory for DAC registers.\n");
 		err = -1;
 		goto fail_request_dac_mem_region;
 	}
 
-	sound_dev.dma_upper_mem = ioremap_nocache(DMA_UPPER_BASE, DMA_UPPER_REGISTERS * sizeof(u32));
-	sound_dev.dma_lower_mem = ioremap_nocache(DMA_LOWER_BASE, DMA_LOWER_REGISTERS * sizeof(u32));
-	sound_dev.prs_mem = ioremap_nocache(PRS_BASE, PRS_REGISTERS * sizeof(u32));
-	sound_dev.timer3_mem = ioremap_nocache(TIMER3_BASE, DAC_REGISTERS * sizeof(u32));
-	sound_dev.dac_mem = ioremap_nocache(DAC0_BASE, DAC_REGISTERS * sizeof(u32));
+	sound_dev.dma_upper_mem =
+	    ioremap_nocache(DMA_UPPER_BASE, DMA_UPPER_REGISTERS * sizeof(u32));
+	sound_dev.dma_lower_mem =
+	    ioremap_nocache(DMA_LOWER_BASE, DMA_LOWER_REGISTERS * sizeof(u32));
+	sound_dev.prs_mem =
+	    ioremap_nocache(PRS_BASE, PRS_REGISTERS * sizeof(u32));
+	sound_dev.timer3_mem =
+	    ioremap_nocache(TIMER3_BASE, DAC_REGISTERS * sizeof(u32));
+	sound_dev.dac_mem =
+	    ioremap_nocache(DAC0_BASE, DAC_REGISTERS * sizeof(u32));
 
 	// old, from using hrtimer that wouldn't work well without
 	// actual high resolution timers
@@ -327,26 +343,29 @@ static int __init template_init(void)
 	// new character device
 	err = cdev_add(&sound_dev.cdev, sound_dev.devno, DEV_NR_COUNT);
 	if (err) {
-		printk(KERN_WARNING "[sound]: Error %d while adding sound.\n", err);
+		printk(KERN_WARNING "[sound]: Error %d while adding sound.\n",
+		       err);
 		goto fail_cdev_add;
 	}
-
 	// make the driver appear in /dev (i.e. user space) by
 	// creating and registering its class
 	sound_dev.cl = class_create(THIS_MODULE, DRIVER_NAME);
 	if (IS_ERR(sound_dev.cl)) {
-		printk(KERN_WARNING "[sound]: Failed to register device class for sound driver.\n");
+		printk(KERN_WARNING
+		       "[sound]: Failed to register device class for sound driver.\n");
 		err = PTR_ERR(sound_dev.cl);
 		goto fail_class_create;
 	}
 
-	chrdev = device_create(sound_dev.cl, NULL, sound_dev.devno, NULL, DRIVER_NAME);
+	chrdev =
+	    device_create(sound_dev.cl, NULL, sound_dev.devno, NULL,
+			  DRIVER_NAME);
 	if (IS_ERR(chrdev)) {
-		printk(KERN_WARNING "[sound]: Failed to create device from class.\n");
+		printk(KERN_WARNING
+		       "[sound]: Failed to create device from class.\n");
 		err = PTR_ERR(chrdev);
 		goto fail_device_create;
 	}
-
 	// setup PRS system so Timer3 triggers PRS_CH5 by writing
 	// 0b011111 to SOURCESEL (Timer3), 0b001 to SIGSEL (overflow)
 	iowrite32(0x001F0001, sound_dev.prs_mem + PRS_CH0_CTRL);
@@ -369,24 +388,28 @@ static int __init template_init(void)
 	// like the dk3750- we get 160a0000 just about every time
 	// (disregarding the page offset), which is alligned
 	// accordingly)
-	dma_pool = dma_pool_create("dma_sound_pool", NULL, pool_alloc_size, pool_align, 0);
+	dma_pool =
+	    dma_pool_create("dma_sound_pool", NULL, pool_alloc_size, pool_align,
+			    0);
 
 	// control block
-	kbuf_control = dma_pool_alloc(dma_pool, GFP_KERNEL, &dma_addr_handle_control);
+	kbuf_control =
+	    dma_pool_alloc(dma_pool, GFP_KERNEL, &dma_addr_handle_control);
 	/* output(kbuf_control, dma_addr_handle_control, 0, "This is the dma_pool_alloc() string"); */
 
 	// 0s
 	kbuf_0 = dma_pool_alloc(dma_pool, GFP_KERNEL, &dma_addr_handle_0);
 	/* output(kbuf_0, dma_addr_handle_0, 0, "This is the dma_pool_alloc() string"); */
-	*((u32*) kbuf_0) = MIN_AMPLITUDE;
+	*((u32 *) kbuf_0) = MIN_AMPLITUDE;
 
 	// 1s
 	kbuf_1 = dma_pool_alloc(dma_pool, GFP_KERNEL, &dma_addr_handle_1);
 	/* output(kbuf_1, dma_addr_handle_1, 0, "This is the dma_pool_alloc() string"); */
-	*((u32*) kbuf_1) = MAX_AMPLITUDE;
+	*((u32 *) kbuf_1) = MAX_AMPLITUDE;
 
 	// control block handle so the DMA knows where its control block is
-	iowrite32(((u32 *) dma_addr_handle_control), sound_dev.dma_upper_mem + DMA_CTRLBASE);
+	iowrite32(((u32 *) dma_addr_handle_control),
+		  sound_dev.dma_upper_mem + DMA_CTRLBASE);
 
 	// config for control block:
 	// write to DMA_CH0, both primary and alternate, to point to
@@ -398,18 +421,24 @@ static int __init template_init(void)
 	// mode in practice), and set n_minus_1 to period length
 
 	// src end pointer
-	iowrite32((u32 *) dma_addr_handle_0, ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0);
-	iowrite32((u32 *) dma_addr_handle_1, ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0);
+	iowrite32((u32 *) dma_addr_handle_0,
+		  ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0);
+	iowrite32((u32 *) dma_addr_handle_1,
+		  ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0);
 
 	// dst end pointer
-	iowrite32(((u32 *) DAC0_BASE) + DAC0_CH0DATA, ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0 + 0x1);
-	iowrite32(((u32 *) DAC0_BASE) + DAC0_CH0DATA, ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0 + 0x1);
+	iowrite32(((u32 *) DAC0_BASE) + DAC0_CH0DATA,
+		  ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0 + 0x1);
+	iowrite32(((u32 *) DAC0_BASE) + DAC0_CH0DATA,
+		  ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0 + 0x1);
 
 	// [2:0] == 0b011 for ping pong mode and 0x32 for 50 transfers
 	// per cycle, C upper bits to set increment off and byte
 	// width, so that the address remains set
-	iowrite32(0xCC000323, ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0 + 0x2);
-	iowrite32(0xCC000323, ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0 + 0x2);
+	iowrite32(0xCC000323,
+		  ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0 + 0x2);
+	iowrite32(0xCC000323,
+		  ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0 + 0x2);
 
 	// sourcesel (0b001010 - DAC0) and sigsel (0b0 - CH0) for DMA
 	// to send sample to DAC_CH0 whenever the DAC is ready
@@ -428,8 +457,10 @@ static int __init template_init(void)
 	// enable the DMA
 	iowrite32(0x1, sound_dev.dma_upper_mem + DMA_CONFIG);
 
-	if (request_irq(DMA_IRQ_LINE , &dma_irq_handler, 0, DRIVER_NAME, &sound_dev))
-		printk(KERN_INFO "[sound]: Could not assign interrupt handler for DMA.\n ");
+	if (request_irq
+	    (DMA_IRQ_LINE, &dma_irq_handler, 0, DRIVER_NAME, &sound_dev))
+		printk(KERN_INFO
+		       "[sound]: Could not assign interrupt handler for DMA.\n ");
 
 	iowrite32(0xF, sound_dev.dac_mem + DAC0_CH0DATA);
 
@@ -438,15 +469,15 @@ static int __init template_init(void)
 
 	// if the driver had worked, we would do some actual clean up
 	// here and in template_cleanup
- fail_device_create: ;
- fail_class_create: ;
- fail_cdev_add: ;
- fail_request_dac_mem_region: ;
- fail_request_timer3_mem_region: ;
- fail_request_prs_mem_region: ;
- fail_request_dma_lower_mem_region: ;
- fail_request_dma_upper_mem_region: ;
- fail_alloc_chrdev: return err;
+ fail_device_create:;
+ fail_class_create:;
+ fail_cdev_add:;
+ fail_request_dac_mem_region:;
+ fail_request_timer3_mem_region:;
+ fail_request_prs_mem_region:;
+ fail_request_dma_lower_mem_region:;
+ fail_request_dma_upper_mem_region:;
+ fail_alloc_chrdev:return err;
 }
 
 static void __exit template_cleanup(void)
@@ -466,4 +497,3 @@ module_exit(template_cleanup);
 
 MODULE_DESCRIPTION("Sound driver used for exercise 3 in TDT4258.");
 MODULE_LICENSE("GPL");
-
