@@ -150,17 +150,17 @@ static void read_register_contents(u32 *reg)
   region and alignment of the allocation, as well as the memory was
   writable.
  */
-static void output(char *kbuf, dma_addr_t handle, size_t size, char *string)
-{
-	unsigned long diff;
-	diff = (unsigned long) kbuf - handle;
-	pr_info("kbuf=%12p, handle=%12p, size = %d\n", kbuf,
-		(unsigned long *) handle, (int) size);
-	pr_info("(kbuf-handle)= %12p, %12lu, PAGE_OFFSET=%12lu, compare=%lu\n",
-		(void *) diff, diff, PAGE_OFFSET, diff - PAGE_OFFSET);
-	strcpy(kbuf, string);
-	pr_info("string written was, %s\n", kbuf);
-}
+/* static void output(char *kbuf, dma_addr_t handle, size_t size, char *string) */
+/* { */
+/* 	unsigned long diff; */
+/* 	diff = (unsigned long) kbuf - handle; */
+/* 	pr_info("kbuf=%12p, handle=%12p, size = %d\n", kbuf, */
+/* 		(unsigned long *) handle, (int) size); */
+/* 	pr_info("(kbuf-handle)= %12p, %12lu, PAGE_OFFSET=%12lu, compare=%lu\n", */
+/* 		(void *) diff, diff, PAGE_OFFSET, diff - PAGE_OFFSET); */
+/* 	strcpy(kbuf, string); */
+/* 	pr_info("string written was, %s\n", kbuf); */
+/* } */
 
 static ssize_t sound_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
@@ -385,9 +385,6 @@ static int __init template_init(void)
 	/* output(kbuf_1, dma_addr_handle_1, 0, "This is the dma_pool_alloc() string"); */
 	*((u32*) kbuf_1) = MAX_AMPLITUDE;
 
-	read_register_contents(virt_to_phys((u32 *) dma_addr_handle_0));
-	read_register_contents(virt_to_phys((u32 *) dma_addr_handle_1));
-
 	// control block handle so the DMA knows where its control block is
 	iowrite32(((u32 *) dma_addr_handle_control), sound_dev.dma_upper_mem + DMA_CTRLBASE);
 
@@ -413,10 +410,6 @@ static int __init template_init(void)
 	// width, so that the address remains set
 	iowrite32(0xCC000323, ((u32 *) dma_addr_handle_control) + DMA_PRIMARY_CH0 + 0x2);
 	iowrite32(0xCC000323, ((u32 *) dma_addr_handle_control) + DMA_ALT_CH0 + 0x2);
-
-	read_register_contents((u32 *) 0x160aa000);
-	read_register_contents((u32 *) 0x160aa004);
-	read_register_contents((u32 *) 0x160aa008);
 
 	// sourcesel (0b001010 - DAC0) and sigsel (0b0 - CH0) for DMA
 	// to send sample to DAC_CH0 whenever the DAC is ready
