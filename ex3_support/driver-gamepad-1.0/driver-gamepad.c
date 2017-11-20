@@ -66,7 +66,8 @@ u8 first_interrupt;
   Read the state of the gamepad buttons and convert into a byte-sized
   format that is active-high. Pass the value to the user space buffer.
  */
-static ssize_t gamepad_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+static ssize_t gamepad_read(struct file *filp, char __user * buf, size_t count,
+			    loff_t * f_pos)
 {
 	u32 GPIO_DIN_state;
 	u8 gp_state;
@@ -152,44 +153,47 @@ static int __init gamepad_init(void)
 	// initialize our device. we could also use memset with 0 and
 	// length sizeof(struct gp_chrdev) to empty the initial struct
 	gp_dev = (struct gp_chrdev) {
-		.devno = 0,
-		.cl = 0,
-		.gpio_pc_mem = 0,
-		.gpio_irq_mem = 0
-	};
+	.devno = 0,.cl = 0,.gpio_pc_mem = 0,.gpio_irq_mem = 0};
 
 	// initialize a (_one_) chardev region with dynamic major part
 	// dynamic and minor set to 0
 	err = alloc_chrdev_region(&gp_dev.devno, 0, DEV_NR_COUNT, DRIVER_NAME);
 	if (err) {
-		printk(KERN_WARNING "[gamepad]: Could not allocate chrdev region for gamepad. (%i).\n", err);
+		printk(KERN_WARNING
+		       "[gamepad]: Could not allocate chrdev region for gamepad. (%i).\n",
+		       err);
 		goto fail_alloc_chrdev;
 	}
-
 	// create the actual kernel character device
 	cdev_init(&gp_dev.cdev, &gp_fops);
 	gp_dev.cdev.owner = THIS_MODULE;
 	gp_dev.cdev.ops = &gp_fops;
 
 	// setup GPIO before we tell the kernel about our new dev
-	gpio_pc_mem = request_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32), DRIVER_NAME);
+	gpio_pc_mem =
+	    request_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32),
+			       DRIVER_NAME);
 	if (!gpio_pc_mem) {
-		printk(KERN_WARNING "[gamepad]: Could not allocate memory for GPIO registers.\n");
+		printk(KERN_WARNING
+		       "[gamepad]: Could not allocate memory for GPIO registers.\n");
 		err = -1;
 		goto fail_request_gpio_mem_region;
 	}
-
 	// setup IRQ as well the same way we did GPIO
-	gpio_irq_mem = request_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32), DRIVER_NAME);
+	gpio_irq_mem =
+	    request_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32),
+			       DRIVER_NAME);
 	if (!gpio_irq_mem) {
-		printk(KERN_WARNING "[gamepad]: Could not allocate memory for IRQ registers.\n");
+		printk(KERN_WARNING
+		       "[gamepad]: Could not allocate memory for IRQ registers.\n");
 		err = -1;
 		goto fail_request_irq_mem_region;
 	}
-
 	// ensure I/O memory is accessible to the kernel with mapping
-	gp_dev.gpio_pc_mem = ioremap_nocache(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
-	gp_dev.gpio_irq_mem = ioremap_nocache(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
+	gp_dev.gpio_pc_mem =
+	    ioremap_nocache(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
+	gp_dev.gpio_irq_mem =
+	    ioremap_nocache(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
 
 	// drive strength, input mode, internal pull-up (we don't need
 	// to enable clocks here - they are already enabled)
@@ -205,32 +209,38 @@ static int __init gamepad_init(void)
 	// new character device
 	err = cdev_add(&gp_dev.cdev, gp_dev.devno, DEV_NR_COUNT);
 	if (err) {
-		printk(KERN_WARNING "[gamepad]: Error %d while adding gamepad.\n", err);
+		printk(KERN_WARNING
+		       "[gamepad]: Error %d while adding gamepad.\n", err);
 		goto fail_cdev_add;
 	}
-
 	// make the driver appear in /dev (i.e. user space) by
 	// creating and registering its class
 	gp_dev.cl = class_create(THIS_MODULE, DRIVER_NAME);
 	if (IS_ERR(gp_dev.cl)) {
-		printk(KERN_WARNING "[gamepad]: Failed to register device class.\n");
+		printk(KERN_WARNING
+		       "[gamepad]: Failed to register device class.\n");
 		err = PTR_ERR(gp_dev.cl);
 		goto fail_class_create;
 	}
 
-	chrdev = device_create(gp_dev.cl, NULL, gp_dev.devno, NULL, DRIVER_NAME);
+	chrdev =
+	    device_create(gp_dev.cl, NULL, gp_dev.devno, NULL, DRIVER_NAME);
 	if (IS_ERR(chrdev)) {
-		printk(KERN_WARNING "[gamepad]: Failed to create device from class.\n");
+		printk(KERN_WARNING
+		       "[gamepad]: Failed to create device from class.\n");
 		err = PTR_ERR(chrdev);
 		goto fail_device_create;
 	}
-
 	// do not return if interrupts cannot be registered, as they
 	// are not specifically required to make the driver work
-	if (request_irq(GPIO_EVEN_IRQ_LINE , &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
-		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Even.\n ");
-	if (request_irq(GPIO_ODD_IRQ_LINE , &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
-		printk(KERN_INFO "[gamepad]: Could not assign interrupt handler for GPIO Odd.\n ");
+	if (request_irq
+	    (GPIO_EVEN_IRQ_LINE, &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
+		printk(KERN_INFO
+		       "[gamepad]: Could not assign interrupt handler for GPIO Even.\n ");
+	if (request_irq
+	    (GPIO_ODD_IRQ_LINE, &gpio_irq_handler, 0, DRIVER_NAME, &gp_dev))
+		printk(KERN_INFO
+		       "[gamepad]: Could not assign interrupt handler for GPIO Odd.\n ");
 
 	// now enable interrupt generation, as we have a functioning
 	// char device
@@ -241,16 +251,17 @@ static int __init gamepad_init(void)
 
 	// fall through goto to release all resources allocated should
 	// there be a failure
- fail_device_create: class_destroy(gp_dev.cl);
- fail_class_create: cdev_del(&gp_dev.cdev);
+ fail_device_create:class_destroy(gp_dev.cl);
+ fail_class_create:cdev_del(&gp_dev.cdev);
  fail_cdev_add:
 	iounmap(gp_dev.gpio_irq_mem);
 	release_mem_region(GPIO_IRQ_BASE, GPIO_IRQ_SIZE * sizeof(u32));
  fail_request_irq_mem_region:
 	iounmap(gp_dev.gpio_pc_mem);
 	release_mem_region(GPIO_PC_BASE, GPIO_PC_SIZE * sizeof(u32));
- fail_request_gpio_mem_region: unregister_chrdev_region(gp_dev.devno, DEV_NR_COUNT);
- fail_alloc_chrdev: return err;
+ fail_request_gpio_mem_region:unregister_chrdev_region(gp_dev.devno,
+				 DEV_NR_COUNT);
+ fail_alloc_chrdev:return err;
 }
 
 static void __exit gamepad_cleanup(void)
@@ -258,7 +269,7 @@ static void __exit gamepad_cleanup(void)
 	// we did not necessarily actually get irq17, irq18, but any
 	// further errors trying to free them will not matter
 	free_irq(GPIO_EVEN_IRQ_LINE, &gp_dev);
-	free_irq(GPIO_ODD_IRQ_LINE , &gp_dev);
+	free_irq(GPIO_ODD_IRQ_LINE, &gp_dev);
 	device_destroy(gp_dev.cl, gp_dev.devno);
 	class_destroy(gp_dev.cl);
 	cdev_del(&gp_dev.cdev);
