@@ -1,0 +1,4 @@
+.gdbinit
+JLink/
+*.swp
+testing/
