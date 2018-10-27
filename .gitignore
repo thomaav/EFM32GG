@@ -2,3 +2,6 @@
 JLink/
 *.swp
 testing/
+*.elf
+*.bin
+*.o
